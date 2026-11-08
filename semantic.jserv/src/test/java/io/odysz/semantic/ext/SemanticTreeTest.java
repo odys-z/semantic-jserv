@@ -1,6 +1,7 @@
 package io.odysz.semantic.ext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static io.odysz.common.LangExt.eq;
@@ -113,19 +114,20 @@ class SemanticTreeTest {
 		assertEquals("01", sm.padSorting(conn, 1));
 	}
 
+	/** placements: SemanticTree's moveNode(), insertNode(), removeNode() */
 	@TestFactory
-	Stream<DynamicTest> testModifyTree() {
+	Stream<DynamicTest> testPlacements() {
 		return jcases.steps.stream()
-			.map(c -> DynamicTest.dynamicTest(String.format("%s %s -> %s[%s]", c.req.a(), c.req.root(), c.req.toParent, c.req.toIndex), () -> runCase(c)));
+			.map(c -> DynamicTest.dynamicTest(c.req.toString(), () -> runCase(c)));
 	}
 
 	static void runCase(StreeStep c) throws Exception {
 		resetTable();
 
-		String msg = String.format("step %s %s -> %s[%s]", c.req.a(), c.req.root(), c.req.toParent, c.req.toIndex);
+		String msg = "step " + c.req;
 
 		AnDatasetResp res = null;
-		AnDatasetReq req = c.req;
+		StreePlace req = c.req;
 		IUser testRobot = new IUser() {
 			@Override
 			public TableMeta meta(String... connId) throws TransException, SQLException { return null; }
@@ -141,14 +143,14 @@ class SemanticTreeTest {
 		};
 
 		SemanticTree stree = new SemanticTree();
-		if (eq(AnDatasetReq.A.insrt, req.a()))
-			res = stree.onInsertTree(conn, sm, req, testRobot);
-		else if (eq(AnDatasetReq.A.umove, req.a()))
-			res = stree.onMoveTree(conn, sm, req, testRobot);
-		else if (eq(AnDatasetReq.A.del, req.a()))
-			res = stree.onDelTree(conn, sm, req, testRobot);
+		if (eq("insert", req.a))
+			res = stree.insertNode(conn, sm, req.nid, req.parent, req.index, req.nvs, testRobot);
+		else if (eq("move", req.a))
+			res = stree.moveNode(conn, sm, req.nid, req.parent, req.index, testRobot);
+		else if (eq("remove", req.a))
+			res = stree.removeNode(conn, sm, req.nid, testRobot);
 		else
-			fail("Unknow A: " + req.a());
+			fail("Unknow placement: " + req.a);
 
 		assertEquals(c.rejected, res.rejected(), msg + ", rejected");
 
@@ -158,6 +160,166 @@ class SemanticTreeTest {
 		}
 
 		assertTree(msg, c.expectings);
+	}
+
+	/**
+	 * The fixture's table as a tree meta: docs and sections hold children, paragraphs don't;
+	 * the docs (top level) are fixed; new ids n1, n2, ...
+	 */
+	static class TestTree implements ITreeMeta {
+		int n = 0;
+		final TreeSemantics stree;
+
+		TestTree() throws Exception {
+			stree = ITreeMeta.stree("doctree", "nid", "parent", "fullpath", "sort", "text", "nodetype");
+		}
+
+		@Override public TreeSemantics treeSemantics() { return stree; }
+		@Override public String nodetype() { return "nodetype"; }
+		@Override public boolean canHold(String type) { return "doc".equals(type) || "section".equals(type); }
+		@Override public boolean fixedRoots() { return true; }
+		@Override public String newId(String connId, String parentId, IUser usr) { return "n" + ++n; }
+	}
+
+	/** children of parent, in sibling order, e.g. "a1 a3 a2" */
+	static String kids(String parent) throws Exception {
+		AnResultset rs = Connects.select(conn, String.format(
+				"select nid from doctree where parent = '%s' order by sort", parent));
+		return String.join(" ", rs.toArr("nid"));
+	}
+
+	static String fullpath(String nid) throws Exception {
+		AnResultset rs = Connects.select(conn, String.format("select fullpath from doctree where nid = '%s'", nid));
+		rs.next();
+		return rs.getString("fullpath");
+	}
+
+	static TestTree tree;
+
+	static AnDatasetResp modify(TreeModify mod) throws Exception {
+		return new SemanticTree().onModifyTree(conn, tree, mod, new io.odysz.semantic.jserv.JRobot());
+	}
+
+	/** onModifyTree(): what the user means → where the node goes, with the table's rules */
+	@Test
+	void testOnModifyTree() throws Exception {
+		tree = new TestTree();
+		resetTable();
+		AnDatasetResp r = modify(TreeModify.up("a3"));
+		assertEquals(null, r.rejected());
+		assertEquals("A", r.root());
+		assertEquals("a1 a3 a2", kids("A"));
+		assertEquals("01.01.02", fullpath("a3"));
+
+		resetTable();
+		modify(TreeModify.down("a1"));
+		assertEquals("a2 a1 a3", kids("A"));
+
+		resetTable();
+		assertEquals(TreeModify.Rejected.noop, modify(TreeModify.up("a1")).rejected());
+		assertEquals(TreeModify.Rejected.noop, modify(TreeModify.down("a3")).rejected());
+		assertEquals(TreeModify.Rejected.noop, modify(TreeModify.indent("a1")).rejected());
+
+		// indent: the last child of the previous sibling, a section
+		r = modify(TreeModify.indent("a3"));
+		assertEquals("A", r.root());
+		assertEquals("a1 a2", kids("A"));
+		assertEquals("a21 a22 a3", kids("a2"));
+		assertEquals("01.01.02.03", fullpath("a3"));
+
+		// a paragraph can't have children
+		resetTable();
+		assertEquals(TreeModify.Rejected.holder, modify(TreeModify.indent("a2")).rejected());
+		assertEquals("a1 a2 a3", kids("A"));
+
+		// outdent: the next sibling of the parent
+		r = modify(TreeModify.outdent("a21"));
+		assertEquals("A", r.root());
+		assertEquals("a1 a2 a21 a3", kids("A"));
+		assertEquals("a22", kids("a2"));
+
+		// fixed roots: no top-level node moves, is removed, or is made
+		resetTable();
+		assertEquals(TreeModify.Rejected.fixed, modify(TreeModify.outdent("A")).rejected());
+		assertEquals(TreeModify.Rejected.fixed, modify(TreeModify.up("D2")).rejected());
+		assertEquals(TreeModify.Rejected.fixed, modify(TreeModify.remove("D1")).rejected());
+		assertEquals(TreeModify.Rejected.fixed,
+				modify(TreeModify.insert("D1", TreeModify.At.after, "nodetype", "doc")).rejected());
+		assertEquals("A B C E", kids("D1"));
+
+		// remove, with the subtree
+		r = modify(TreeModify.remove("a2"));
+		assertEquals("A", r.root());
+		assertEquals("a1 a3", kids("A"));
+		assertEquals("", kids("a2"));
+		assertEquals(0, Connects.select(conn, "select nid from doctree where nid in ('a2', 'a21', 'a22')").total());
+
+		// insert: after a node, or as a section's first / last child
+		resetTable();
+		r = modify(TreeModify.insert("a1", TreeModify.At.after, "nodetype", "para", "text", "new"));
+		assertEquals(null, r.rejected());
+		assertEquals("n1", r.newId());
+		assertEquals("A", r.root());
+		assertEquals("a1 n1 a2 a3", kids("A"));
+		assertEquals("01.01.02", fullpath("n1"));
+
+		assertEquals(TreeModify.Rejected.holder,
+				modify(TreeModify.insert("a1", TreeModify.At.first, "nodetype", "para")).rejected());
+
+		r = modify(TreeModify.insert("C", TreeModify.At.last, "nodetype", "para"));
+		assertEquals("n2", r.newId());
+		assertEquals("n2", kids("C"));
+		modify(TreeModify.insert("a2", TreeModify.At.first, "nodetype", "para"));
+		assertEquals("n3 a21 a22", kids("a2"));
+	}
+
+	/** A modification request through Anson, as clients send it */
+	@Test
+	void testModifyReq() throws Exception {
+		AnDatasetReq req = new AnDatasetReq().mod(TreeModify.insert("a1", TreeModify.At.after, "nodetype", "para"));
+		req.a(AnDatasetReq.A.stree);
+		String json = req.toBlock();
+		assertTrue(json.contains("\"op\": \"insert\""), json);
+		assertTrue(json.contains("\"at\": \"after\""), json);
+
+		AnDatasetReq back = (AnDatasetReq) Anson.fromJson(json);
+		assertEquals("u/stree", back.a());
+		assertEquals(TreeModify.Op.insert, back.mod.op);
+		assertEquals(TreeModify.At.after, back.mod.at);
+		assertEquals("para", back.mod.nvs.get(0)[1]);
+	}
+
+	/** Every Op, At and Rejected through Anson, by name, and null kept null */
+	@Test
+	void testEnumsRoundTrip() throws Exception {
+		for (TreeModify.Op op : TreeModify.Op.values()) {
+			TreeModify m = new TreeModify(op, "a1");
+			TreeModify back = (TreeModify) Anson.fromJson(m.toBlock());
+			assertEquals(op, back.op);
+			assertEquals(null, back.at);
+		}
+		for (TreeModify.At at : TreeModify.At.values())
+			assertEquals(at, ((TreeModify) Anson.fromJson(TreeModify.insert("a1", at).toBlock())).at);
+
+		for (TreeModify.Rejected why : TreeModify.Rejected.values()) {
+			AnDatasetResp r = new AnDatasetResp().rejected(why);
+			String json = r.toBlock();
+			assertTrue(json.contains("\"rejected\": \"" + why.name() + "\""), json);
+			assertEquals(why, ((AnDatasetResp) Anson.fromJson(json)).rejected());
+		}
+		assertEquals(null, ((AnDatasetResp) Anson.fromJson(new AnDatasetResp().toBlock())).rejected());
+
+		// what a TS client writes by hand
+		TreeModify m = (TreeModify) Anson.fromJson(
+			"{\"type\": \"io.odysz.semantic.ext.TreeModify\", \"op\": \"outdent\", \"nid\": \"a2\"}");
+		assertEquals(TreeModify.Op.outdent, m.op);
+	}
+
+	/** A name that isn't an Op is refused while parsing, not taken as null */
+	@Test
+	void testUnknownOp() {
+		assertThrows(Exception.class, () -> Anson.fromJson(
+			"{\"type\": \"io.odysz.semantic.ext.TreeModify\", \"op\": \"move\", \"nid\": \"a2\"}"));
 	}
 
 	static void resetTable() throws Exception {

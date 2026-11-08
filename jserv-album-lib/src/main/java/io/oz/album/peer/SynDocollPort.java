@@ -33,10 +33,10 @@ public enum SynDocollPort implements IPort {
 	menu("menu.serv"), settings("settings.less"),
 
 	/**
-	 * doctree.less, semantic-doc's doc-tree tier (doctree.jserv's DoctreeTier).
+	 * doctree.serv, semantic-doc's doc-tree tier (doctree.jserv's DoctreeTier).
 	 * Also in {@link AlbumPort}; synodes parse ports with this enum.
 	 */
-	doctree("doctree.less"),
+	doctree("doctree.serv"),
 
 	/**
 	 * By forcing understanding Centralport.register, can accept response from central.

@@ -596,81 +596,181 @@ where p0.parentId is null; </pre>
 	}
 
 	/**
-	 * Move node req.rootId (with its subtree) to req.toParent (null: top level), at req.toIndex,
-	 * which is the final position among toParent's children, counted after the node is detached.
+	 * Modify a tree as the user means it, see {@link TreeModify}: work out the parent and
+	 * position, check the table's rules ({@link ITreeMeta}), then move / insert / remove.
+	 *
+	 * <p>Rejected, with the table unchanged ({@link TreeModify.Rejected}): no-op (e.g. the first
+	 * child up), cycle, not-holder (under a node that can't have children), fixed-roots.</p>
+	 *
+	 * @param connId
+	 * @param m the table
+	 * @param mod
+	 * @param usr
+	 * @return the reload root and the forest under it (null root: the whole table),
+	 * the rejected reason, and for an insert, the new node's id
+	 * @throws SemanticException node not found, unknown op
+	 * @since 1.5.20
+	 */
+	public AnDatasetResp onModifyTree(String connId, ITreeMeta m, TreeModify mod, IUser usr)
+			throws TransException, SQLException {
+		sqliteOnly(connId);
+		if (mod == null || mod.op == null)
+			throw new SemanticException("Tree modification is null.");
+
+		DATranscxt t = trans(connId);
+		TreeSemantics sm = m.treeSemantics();
+		String parent = nodeRow(t, connId, sm, mod.nid, usr).getString(sm.dbParent());
+		boolean top = isblank(parent);
+
+		if (mod.op == TreeModify.Op.insert) {
+			String to; int ix;
+			if (mod.at == TreeModify.At.after) {
+				if (top && m.fixedRoots())
+					return new AnDatasetResp().rejected(TreeModify.Rejected.fixed);
+				to = parent;
+				ix = children(t, connId, sm, parent, usr).indexOf(mod.nid) + 1;
+			}
+			else if (mod.at == TreeModify.At.first || mod.at == TreeModify.At.last) {
+				if (!holds(t, connId, m, mod.nid, usr))
+					return new AnDatasetResp().rejected(TreeModify.Rejected.holder);
+				to = mod.nid;
+				ix = mod.at == TreeModify.At.first ? 0 : children(t, connId, sm, mod.nid, usr).size();
+			}
+			else throw new SemanticException("Unknown position of inserting: %s", mod.at);
+
+			String nid = m.newId(connId, to, usr);
+			return insertNode(connId, sm, nid, to, ix, mod.nvs, usr).newId(nid);
+		}
+
+		// the others act on the node itself
+		if (top && m.fixedRoots())
+			return new AnDatasetResp().rejected(TreeModify.Rejected.fixed);
+
+		if (mod.op == TreeModify.Op.remove)
+			return removeNode(connId, sm, mod.nid, usr);
+
+		List<String> sibs = children(t, connId, sm, parent, usr);
+		int ix = sibs.indexOf(mod.nid);
+
+		if (mod.op == TreeModify.Op.up)
+			return ix <= 0 ? new AnDatasetResp().rejected(TreeModify.Rejected.noop)
+					: moveNode(connId, sm, mod.nid, parent, ix - 1, usr);
+
+		if (mod.op == TreeModify.Op.down)
+			return ix >= sibs.size() - 1 ? new AnDatasetResp().rejected(TreeModify.Rejected.noop)
+					: moveNode(connId, sm, mod.nid, parent, ix + 1, usr);
+
+		if (mod.op == TreeModify.Op.indent) {
+			if (ix <= 0)
+				return new AnDatasetResp().rejected(TreeModify.Rejected.noop);
+			String prev = sibs.get(ix - 1);
+			if (!holds(t, connId, m, prev, usr))
+				return new AnDatasetResp().rejected(TreeModify.Rejected.holder);
+			return moveNode(connId, sm, mod.nid, prev, children(t, connId, sm, prev, usr).size(), usr);
+		}
+
+		if (mod.op == TreeModify.Op.outdent) {
+			if (top)
+				return new AnDatasetResp().rejected(TreeModify.Rejected.noop);
+			String grand = nodeRow(t, connId, sm, parent, usr).getString(sm.dbParent());
+			if (isblank(grand) && m.fixedRoots())
+				return new AnDatasetResp().rejected(TreeModify.Rejected.fixed);
+			int pix = children(t, connId, sm, grand, usr).indexOf(parent);
+			return moveNode(connId, sm, mod.nid, grand, pix + 1, usr);
+		}
+
+		throw new SemanticException("Unknown tree modification: %s", mod.op);
+	}
+
+	/** May node nid have children, by its type ({@link ITreeMeta#canHold(String)})? */
+	static boolean holds(DATranscxt t, String connId, ITreeMeta m, String nid, IUser usr)
+			throws TransException, SQLException {
+		if (isblank(m.nodetype()))
+			return m.canHold(null);
+		AnResultset rs = (AnResultset) t.select(m.treeSemantics().tabl())
+				.col(m.nodetype())
+				.whereEq(m.treeSemantics().dbRecId(), nid)
+				.rs(t.instancontxt(connId, usr))
+				.rs(0);
+		return rs.next() && m.canHold(rs.getString(m.nodetype()));
+	}
+
+	/**
+	 * Move node nid (with its subtree) to parent (null: top level), at index,
+	 * which is the final position among parent's children, counted after the node is detached.
 	 * 
-	 * <p>Rejected, with the table unchanged: "cycle" (into itself or a descendant),
-	 * "no-op" (same parent, same index).</p>
+	 * <p>Rejected, with the table unchanged: cycle (into itself or a descendant),
+	 * no-op (same parent, same index).</p>
 	 * 
 	 * @return response with reload root, or rejected reason
 	 * @throws SemanticException node or parent not found, index out of range
 	 * @since 1.5.20
 	 */
-	public AnDatasetResp onMoveTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
+	AnDatasetResp moveNode(String connId, TreeSemantics sm, String nid, String parent, int index, IUser usr)
 			throws TransException, SQLException {
 		sqliteOnly(connId);
 		DATranscxt t = trans(connId);
 
-		String from = nodeRow(t, connId, sm, req.root(), usr).getString(sm.dbParent());
-		if (!isblank(req.toParent))
-			nodeRow(t, connId, sm, req.toParent, usr); // must exist
+		String from = nodeRow(t, connId, sm, nid, usr).getString(sm.dbParent());
+		if (!isblank(parent))
+			nodeRow(t, connId, sm, parent, usr); // must exist
 
-		if (req.root().equals(req.toParent)
-			|| !isblank(req.toParent) && isAncestor(t, connId, sm, req.root(), req.toParent, usr))
-			return new AnDatasetResp().rejected("cycle");
+		if (nid.equals(parent)
+			|| !isblank(parent) && isAncestor(t, connId, sm, nid, parent, usr))
+			return new AnDatasetResp().rejected(TreeModify.Rejected.cycle);
 
 		List<String> oldKids = children(t, connId, sm, from, usr);
-		boolean sameParent = isblank(from) ? isblank(req.toParent) : eq(from, req.toParent);
-		if (sameParent && oldKids.indexOf(req.root()) == req.toIndex)
-			return new AnDatasetResp().rejected("no-op");
+		boolean sameParent = isblank(from) ? isblank(parent) : eq(from, parent);
+		if (sameParent && oldKids.indexOf(nid) == index)
+			return new AnDatasetResp().rejected(TreeModify.Rejected.noop);
 
-		String root = lca(t, connId, sm, from, req.toParent, usr);
+		String root = lca(t, connId, sm, from, parent, usr);
 
-		oldKids.remove(req.root());
-		List<String> newKids = sameParent ? oldKids : children(t, connId, sm, req.toParent, usr);
-		insertAt(newKids, req.toIndex, req.root());
+		oldKids.remove(nid);
+		List<String> newKids = sameParent ? oldKids : children(t, connId, sm, parent, usr);
+		insertAt(newKids, index, nid);
 
 		ArrayList<Statement<?>> sorts = renumber(t, sm, newKids, null);
 		if (!sameParent)
 			renumber(t, sm, oldKids, sorts);
 
 		t.update(sm.tabl(), usr)
-			.nv(sm.dbParent(), req.toParent)
-			.whereEq(sm.dbRecId(), req.root())
+			.nv(sm.dbParent(), parent)
+			.whereEq(sm.dbRecId(), nid)
 			.post(sorts)
 			.u(t.instancontxt(connId, usr));
 
-		if (isblank(from) || isblank(req.toParent))
+		if (isblank(from) || isblank(parent))
 			reshapeForest(t, connId, sm, usr);
 		else {
 			Reforest.shapeSubtree(connId, from, sm, usr);
 			if (!sameParent)
-				Reforest.shapeSubtree(connId, req.toParent, sm, usr);
+				Reforest.shapeSubtree(connId, parent, sm, usr);
 		}
 
 		return respond(t, connId, sm, root, usr);
 	}
 
 	/**
-	 * Delete node req.rootId and its subtree, then renumber its siblings.
+	 * Delete node nid and its subtree, then renumber its siblings.
 	 * 
 	 * @return response with reload root, the parent of the deleted node
 	 * @throws SemanticException node not found
 	 * @since 1.5.20
 	 */
-	public AnDatasetResp onDelTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
+	AnDatasetResp removeNode(String connId, TreeSemantics sm, String nid, IUser usr)
 			throws TransException, SQLException {
 		sqliteOnly(connId);
 		DATranscxt t = trans(connId);
 
-		String parent = nodeRow(t, connId, sm, req.root(), usr).getString(sm.dbParent());
+		String parent = nodeRow(t, connId, sm, nid, usr).getString(sm.dbParent());
 		List<String> kids = children(t, connId, sm, parent, usr);
-		kids.remove(req.root());
+		kids.remove(nid);
 
 		// the subtree by parent links, not fullpaths, which may be stale while others are modifying the tree
 		t.with(true)
 			.withTable("sub_(nid)")
-			.withVal(constr(req.root()))
+			.withVal(constr(nid))
 			.union(t.select(sm.tabl(), "me")
 					.col("me." + sm.dbRecId())
 					.je("me", "sub_", "s", sm.dbParent(), "nid"))
@@ -688,41 +788,41 @@ where p0.parentId is null; </pre>
 	}
 
 	/**
-	 * Insert node req.rootId under req.toParent (null: top level) at req.toIndex,
-	 * with other columns in req.nvs, [name, value].
+	 * Insert node nid under parent (null: top level) at index,
+	 * with other columns, [name, value].
 	 * 
 	 * @return response with reload root, the parent
 	 * @throws SemanticException parent not found, index out of range
 	 * @since 1.5.20
 	 */
-	public AnDatasetResp onInsertTree(String connId, TreeSemantics sm, AnDatasetReq req, IUser usr)
-			throws TransException, SQLException {
+	AnDatasetResp insertNode(String connId, TreeSemantics sm, String nid, String parent, int index,
+			List<String[]> nvs, IUser usr) throws TransException, SQLException {
 		sqliteOnly(connId);
 		DATranscxt t = trans(connId);
 
-		if (!isblank(req.toParent))
-			nodeRow(t, connId, sm, req.toParent, usr); // must exist
-		List<String> kids = children(t, connId, sm, req.toParent, usr);
-		insertAt(kids, req.toIndex, req.root());
+		if (!isblank(parent))
+			nodeRow(t, connId, sm, parent, usr); // must exist
+		List<String> kids = children(t, connId, sm, parent, usr);
+		insertAt(kids, index, nid);
 
 		Insert ins = t.insert(sm.tabl(), usr)
-			.nv(sm.dbRecId(), req.root())
-			.nv(sm.dbParent(), req.toParent)
+			.nv(sm.dbRecId(), nid)
+			.nv(sm.dbParent(), parent)
 			.nv(sm.dbSort(), 0); // fullpath: by table semantics if configured, then reshaped below
-		if (req.nvs != null)
-			for (String[] nv : req.nvs)
+		if (nvs != null)
+			for (String[] nv : nvs)
 				ins.nv(nv[0], nv.length > 1 ? nv[1] : null);
 
 		// posted updates are committed after the insert, the new node included
 		ins.post(renumber(t, sm, kids, null))
 			.ins(t.instancontxt(connId, usr));
 
-		if (isblank(req.toParent))
+		if (isblank(parent))
 			reshapeForest(t, connId, sm, usr);
 		else
-			Reforest.shapeSubtree(connId, req.toParent, sm, usr);
+			Reforest.shapeSubtree(connId, parent, sm, usr);
 
-		return respond(t, connId, sm, req.toParent, usr);
+		return respond(t, connId, sm, parent, usr);
 	}
 
 	static void sqliteOnly(String connId) throws SemanticException {

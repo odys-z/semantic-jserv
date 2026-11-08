@@ -50,11 +50,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "R1: a1 down (middle swap; fullpaths change, indents don't)",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a1",
-    "toParent": "A",
-    "toIndex": 1
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a1",
+    "parent": "A",
+    "index": 1
    },
    "root": "A",
    "rejected": null,
@@ -82,11 +82,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "R2: a3 (last) to top: a2 becomes last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a3",
-    "toParent": "A",
-    "toIndex": 0
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a3",
+    "parent": "A",
+    "index": 0
    },
    "root": "A",
    "rejected": null,
@@ -114,11 +114,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "R3: a1 to bottom: a3 stops being last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a1",
-    "toParent": "A",
-    "toIndex": 2
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a1",
+    "parent": "A",
+    "index": 2
    },
    "root": "A",
    "rejected": null,
@@ -146,14 +146,14 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "R4: a1 up at index 0: no-op",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a1",
-    "toParent": "A",
-    "toIndex": 0
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a1",
+    "parent": "A",
+    "index": 0
    },
    "root": null,
-   "rejected": "no-op",
+   "rejected": "noop",
    "expectings": [
     "- D1 - 1 01",
     "├ A D1 1 01.01",
@@ -178,11 +178,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "R5: E (last section) up: C becomes last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "E",
-    "toParent": "D1",
-    "toIndex": 2
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "E",
+    "parent": "D1",
+    "index": 2
    },
    "root": "D1",
    "rejected": null,
@@ -210,11 +210,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "M1: b1 into empty sibling section C",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "b1",
-    "toParent": "C",
-    "toIndex": 0
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "b1",
+    "parent": "C",
+    "index": 0
    },
    "root": "D1",
    "rejected": null,
@@ -242,11 +242,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "M2: a1 appended to E: e2 stops being last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a1",
-    "toParent": "E",
-    "toIndex": 2
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a1",
+    "parent": "E",
+    "index": 2
    },
    "root": "D1",
    "rejected": null,
@@ -274,11 +274,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "M3: a3 (last of A) to front of B: a2 becomes last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a3",
-    "toParent": "B",
-    "toIndex": 0
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a3",
+    "parent": "B",
+    "index": 0
    },
    "root": "D1",
    "rejected": null,
@@ -306,11 +306,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "M4: subtree a2 (with children) to front of e2, deep to deep",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a2",
-    "toParent": "e2",
-    "toIndex": 0
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a2",
+    "parent": "e2",
+    "index": 0
    },
    "root": "D1",
    "rejected": null,
@@ -338,11 +338,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "M5: section B (with child) into section A, middle",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "B",
-    "toParent": "A",
-    "toIndex": 1
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "B",
+    "parent": "A",
+    "index": 1
    },
    "root": "D1",
    "rejected": null,
@@ -370,11 +370,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "I1: indent a3 under previous sibling a2, as last child",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a3",
-    "toParent": "a2",
-    "toIndex": 2
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a3",
+    "parent": "a2",
+    "index": 2
    },
    "root": "A",
    "rejected": null,
@@ -402,11 +402,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "I2: indent C under previous sibling B",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "C",
-    "toParent": "B",
-    "toIndex": 1
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "C",
+    "parent": "B",
+    "index": 1
    },
    "root": "D1",
    "rejected": null,
@@ -434,11 +434,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "O1: outdent a22 to right after a2: a21 becomes last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a22",
-    "toParent": "A",
-    "toIndex": 2
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a22",
+    "parent": "A",
+    "index": 2
    },
    "root": "A",
    "rejected": null,
@@ -466,11 +466,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "O2: outdent e21 (only child) to after e2, end of E",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "e21",
-    "toParent": "E",
-    "toIndex": 2
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "e21",
+    "parent": "E",
+    "index": 2
    },
    "root": "E",
    "rejected": null,
@@ -498,11 +498,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "X1: f1 from Doc 2 into A, cross tree",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "f1",
-    "toParent": "A",
-    "toIndex": 1
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "f1",
+    "parent": "A",
+    "index": 1
    },
    "root": null,
    "rejected": null,
@@ -530,11 +530,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "X2: C to top level between D1 and D2",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "C",
-    "toParent": null,
-    "toIndex": 1
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "C",
+    "parent": null,
+    "index": 1
    },
    "root": null,
    "rejected": null,
@@ -562,11 +562,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "X3: D2 before D1, reorder top level",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "D2",
-    "toParent": null,
-    "toIndex": 0
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "D2",
+    "parent": null,
+    "index": 0
    },
    "root": null,
    "rejected": null,
@@ -594,11 +594,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "N1: insert n into empty C",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "i",
-    "rootId": "n",
-    "toParent": "C",
-    "toIndex": 0,
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "insert",
+    "nid": "n",
+    "parent": "C",
+    "index": 0,
     "nvs": [
      [
       "nodetype",
@@ -637,11 +637,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "N2: append n to E: e2 stops being last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "i",
-    "rootId": "n",
-    "toParent": "E",
-    "toIndex": 2,
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "insert",
+    "nid": "n",
+    "parent": "E",
+    "index": 2,
     "nvs": [
      [
       "nodetype",
@@ -680,11 +680,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "N3: insert n at front of B",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "i",
-    "rootId": "n",
-    "toParent": "B",
-    "toIndex": 0,
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "insert",
+    "nid": "n",
+    "parent": "B",
+    "index": 0,
     "nvs": [
      [
       "nodetype",
@@ -723,11 +723,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "N4: insert top-level doc D0 first",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "i",
-    "rootId": "D0",
-    "toParent": null,
-    "toIndex": 0,
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "insert",
+    "nid": "D0",
+    "parent": null,
+    "index": 0,
     "nvs": [
      [
       "nodetype",
@@ -766,9 +766,9 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "RM1: remove a3 (last): a2 becomes last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "d",
-    "rootId": "a3"
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "remove",
+    "nid": "a3"
    },
    "root": "A",
    "rejected": null,
@@ -795,9 +795,9 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "RM2: remove subtree a2: a3 renumbered",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "d",
-    "rootId": "a2"
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "remove",
+    "nid": "a2"
    },
    "root": "A",
    "rejected": null,
@@ -822,9 +822,9 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "RM3: remove E (last section, with subtree): C becomes last",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "d",
-    "rootId": "E"
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "remove",
+    "nid": "E"
    },
    "root": "D1",
    "rejected": null,
@@ -848,11 +848,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "V1: move A into its own descendant a21",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "A",
-    "toParent": "a21",
-    "toIndex": 0
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "A",
+    "parent": "a21",
+    "index": 0
    },
    "root": null,
    "rejected": "cycle",
@@ -880,11 +880,11 @@
    "type": "io.odysz.semantic.ext.StreeStep",
    "//": "V2: move a1 into itself",
    "req": {
-    "type": "io.odysz.semantic.ext.AnDatasetReq",
-    "a": "u/move",
-    "rootId": "a1",
-    "toParent": "a1",
-    "toIndex": 0
+    "type": "io.odysz.semantic.ext.StreePlace",
+    "a": "move",
+    "nid": "a1",
+    "parent": "a1",
+    "index": 0
    },
    "root": null,
    "rejected": "cycle",

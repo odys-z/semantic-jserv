@@ -9,13 +9,14 @@ import io.odysz.anson.Anson;
  * @since 1.5.20
  */
 public class StreeStep extends Anson {
-	AnDatasetReq req;
+	/** the placement, see {@link StreePlace} */
+	StreePlace req;
 
 	/** expected reload root, null for the whole forest */
 	String root;
 
 	/** expected rejection reason, null if accepted */
-	String rejected;
+	TreeModify.Rejected rejected;
 
 	/** expected tree after the step */
 	List<String> expectings;

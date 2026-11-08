@@ -42,7 +42,15 @@ public class AnDatasetResp extends AnsonResp {
 	 * Tree modification: null if accepted, otherwise the reason, e.g. "cycle", "no-op".
 	 * @since 1.5.20
 	 */
-	String rejected;
-	public String rejected() { return rejected; }
-	public AnDatasetResp rejected(String why) { rejected = why; return this; }
+	TreeModify.Rejected rejected;
+	public TreeModify.Rejected rejected() { return rejected; }
+	public AnDatasetResp rejected(TreeModify.Rejected why) { rejected = why; return this; }
+
+	/**
+	 * Tree modification, insert: the new node's id.
+	 * @since 1.5.20
+	 */
+	String newId;
+	public String newId() { return newId; }
+	public AnDatasetResp newId(String nid) { newId = nid; return this; }
 }

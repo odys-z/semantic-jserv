@@ -1,6 +1,5 @@
 package io.odysz.semantic.ext;
 
-import java.util.ArrayList;
 
 import org.xml.sax.SAXException;
 
@@ -24,12 +23,12 @@ public class AnDatasetReq extends AnQueryReq {
 		 */
 		public static final String ds  = "sqltree";
 		
-		/** @since 1.5.20 */
-		public static final String insrt = "i";
-		/** @since 1.5.20 */
-		public static final String umove = "u/move";
-		/** @since 1.5.20 */
-		public static final String del = "d";
+		/**
+		 * Modify a tree as {@link AnDatasetReq#mod} says, see
+		 * {@link SemanticTree#onModifyTree(String, ITreeMeta, TreeModify, io.odysz.semantics.IUser)}.
+		 * @since 1.5.20
+		 */
+		public static final String stree = "u/stree";
 	}
 
 	String sk;
@@ -42,22 +41,20 @@ public class AnDatasetReq extends AnQueryReq {
 	 */
 	protected TreeSemantics stcs;
 
-	/**
-	 * The root of the subtree the request acts on, e.g. retree, tagtree;
-	 * since 1.5.20, the node to be moved, inserted or deleted (with its subtree).
-	 */
+	/** The root of the subtree the request acts on, e.g. retree, tagtree. */
 	public String rootId;
 	public String root() { return rootId; }
 
-	/** Tree modification: target parent, null for the top level. @since 1.5.20 */
-	public String toParent;
 	/**
-	 * Tree modification: final position among toParent's children,
-	 * counted after the node is detached (move). @since 1.5.20
+	 * For {@link A#stree}: what to do to the tree, the server works out where nodes go.
+	 * @since 1.5.20
 	 */
-	public int toIndex;
-	/** Tree modification: other columns of the inserted node, [name, value]. @since 1.5.20 */
-	public ArrayList<String[]> nvs;
+	public TreeModify mod;
+
+	public AnDatasetReq mod(TreeModify m) {
+		this.mod = m;
+		return this;
+	}
 
 	public AnDatasetReq() { super(null, null);}
 
