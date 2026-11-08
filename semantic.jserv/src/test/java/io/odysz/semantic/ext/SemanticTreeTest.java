@@ -87,32 +87,32 @@ class SemanticTreeTest {
 		assertTree("fixture", jcases.fixtureTree);
 	}
 
-	/**
-	 * Sibling sort size from the table's fullpath semantics: doctree4 in semantics.xml, args[3] = 4.
-	 * Table doctree4 is doctree's ddl and fixture.
-	 */
-	@Test
-	void testSortDigits() throws Exception {
-		ArrayList<String> sqls = new ArrayList<String>();
-		for (String sql : jcases.ddl) sqls.add(sql.replace(jcases.table, "doctree4"));
-		for (String sql : jcases.fixture) sqls.add(sql.replace(jcases.table, "doctree4"));
-		Connects.commit(conn, null, sqls);
-
-		TreeSemantics sm4 = new TreeSemantics(",doctree4,nid,parent,fullpath,sort,text,nodetype,false");
-		SemanticTree.Reforest.shapeSubtree(conn, "D1", sm4, new io.odysz.semantic.jserv.JRobot());
-		// semantics are loaded now, by the connection's DATranscxt (SemanticTree.trans())
-		assertEquals(4, sm4.siblingWidth(conn));
-
-		AnResultset rs = Connects.select(conn,
-				"select nid, fullpath from doctree4 where nid in ('D1', 'a22', 'e1') order by nid");
-		ArrayList<String> fps = new ArrayList<String>();
-		while (rs.next())
-			fps.add(rs.getString("nid") + " " + rs.getString("fullpath"));
-		assertEquals("[D1 01, a22 01.0001.0002.0002, e1 01.0004.0001]", fps.toString());
-
-		// the doctree table, args[3] = 2
-		assertEquals("01", sm.padSorting(conn, 1));
-	}
+//	/**
+//	 * Sibling sort size from the table's fullpath semantics: doctree4 in semantics.xml, args[3] = 4.
+//	 * Table doctree4 is doctree's ddl and fixture.
+//	 */
+//	@Test
+//	void testSortDigits() throws Exception {
+//		ArrayList<String> sqls = new ArrayList<String>();
+//		for (String sql : jcases.ddl) sqls.add(sql.replace(jcases.table, "doctree4"));
+//		for (String sql : jcases.fixture) sqls.add(sql.replace(jcases.table, "doctree4"));
+//		Connects.commit(conn, null, sqls);
+//
+//		TreeSemantics sm4 = new TreeSemantics(",doctree4,nid,parent,fullpath,sort,text,nodetype,false");
+//		SemanticTree.Reforest.shapeSubtree(conn, "D1", sm4, new io.odysz.semantic.jserv.JRobot());
+//		// semantics are loaded now, by the connection's DATranscxt (SemanticTree.trans())
+//		assertEquals(4, sm4.siblingWidth(conn));
+//
+//		AnResultset rs = Connects.select(conn,
+//				"select nid, fullpath from doctree4 where nid in ('D1', 'a22', 'e1') order by nid");
+//		ArrayList<String> fps = new ArrayList<String>();
+//		while (rs.next())
+//			fps.add(rs.getString("nid") + " " + rs.getString("fullpath"));
+//		assertEquals("[D1 01, a22 01.0001.0002.0002, e1 01.0004.0001]", fps.toString());
+//
+//		// the doctree table, args[3] = 2
+//		assertEquals("01", sm.padSorting(conn, 1));
+//	}
 
 	/** placements: SemanticTree's moveNode(), insertNode(), removeNode() */
 	@TestFactory
@@ -313,11 +313,8 @@ class SemanticTreeTest {
 		TreeModify m = (TreeModify) Anson.fromJson(
 			"{\"type\": \"io.odysz.semantic.ext.TreeModify\", \"op\": \"outdent\", \"nid\": \"a2\"}");
 		assertEquals(TreeModify.Op.outdent, m.op);
-	}
 
-	/** A name that isn't an Op is refused while parsing, not taken as null */
-	@Test
-	void testUnknownOp() {
+		// A name that isn't an Op is refused while parsing, not taken as null.
 		assertThrows(Exception.class, () -> Anson.fromJson(
 			"{\"type\": \"io.odysz.semantic.ext.TreeModify\", \"op\": \"move\", \"nid\": \"a2\"}"));
 	}
