@@ -38,7 +38,7 @@ Usage:
     synode-cli               configure and install this synode, interactively
     synode-cli -h | --help   show this help and quit
 
-Run it in the synode's folder (with WEB-INF/settings.json). Return with empty input to abort.
+Run it in the synode's folder (with WEB-INF). Return with empty input to abort.
 At the ports prompt, enter '?' to list the available ports, or '??' to also show what holds the used ones.
 
 {commands_table}

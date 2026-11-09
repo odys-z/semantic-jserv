@@ -417,7 +417,10 @@ public class ExpSynodetier extends ServPort<SyncReq> {
 		} catch (SsException e) {
 			warn("There are configuration error to login central service?");
 			e.printStackTrace();
-		} catch (Exception e) {
+		} catch (Throwable e) {
+			// an Error (e.g. NoSuchMethodError) escaping a scheduled task is swallowed by the
+			// executor, which then silently cancels all later runs of worker 0
+			warn("Worker 0 (jservs & host.json exposer) of %s failed: %s", synid, e);
 			e.printStackTrace();
 			stop0 = true;
 		}

@@ -396,7 +396,7 @@ public class SynotierJettyApp implements Daemon {
 		SynDomanager domanger = synapp.syngleton.domanager(cfg.domain);
 		ExpSynodetier syncer = new ExpSynodetier(domanger)
 								.syncIn(cfg.syncIns,
-									(c, r, args) -> Utils.warn("[Syn-worker ERROR] code: %s, msg: %s", r));
+									(c, r, args) -> Utils.warn("[Syn-worker ERROR] code: %s, msg: %s", c, r));
 		addServPort(syncer);
 		return this;
 	}
