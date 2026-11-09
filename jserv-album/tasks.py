@@ -611,6 +611,9 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
         'web-dist': f'{taskcfg.git_prj("album-web")}/web-dist/*',
 
+        # sdoc-template made by semantic-doc/src/make-template.py
+        'web-dist/sdoc-template': 'src/main/webapp/sdoc-template-0.8/*',
+
         'README.md': readme_md,
     }
 
