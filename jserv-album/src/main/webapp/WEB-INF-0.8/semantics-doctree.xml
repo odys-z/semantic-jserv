@@ -3,6 +3,7 @@
 <!-- Semantics of the doc-tree db (DoctreeDB). The same as doctree.jserv's test resource; the name is hard coded (DoctreeDBHelper.smtcs).
 	fullpath args: parent field, sibling sort field, fullpath field, sort size
 		(sort size: the only place configuring it; SemanticTree and the importer read it, DocNodeMeta.siblingWidth())
+	fullpath2: experimental ShFullpath2 (semantic.DA 1.5.31), the same args; updates only by parent / sort
  -->
 <semantics>
   <t id="semantics" pk="id" columns="id,smtc,tabl,pk,args">
@@ -18,7 +19,7 @@
 	</s>
 	<s>
 		<id>docnodes.fp</id>
-		<smtc>fullpath</smtc>
+		<smtc>fullpath2</smtc>
 		<tabl>s_docnodes</tabl>
 		<pk>nid</pk>
 		<args>parentId,sort,fullpath,4</args>
