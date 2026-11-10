@@ -39,6 +39,12 @@ public enum SynDocollPort implements IPort {
 	doctree("doctree.serv"),
 
 	/**
+	 * doctree206.serv, the docs' resources (pictures) for the doc-tree editor, with break
+	 * points (http 206): doctree.jserv's Doctree206Serv. Also in {@link AlbumPort}.
+	 */
+	doctree206("doctree206.serv"),
+
+	/**
 	 * By forcing understanding Centralport.register, can accept response from central.
 	 * But this is not correct, and is not possible to fix if anson.java cannot parse multiple
 	 * enum classes for the same field.

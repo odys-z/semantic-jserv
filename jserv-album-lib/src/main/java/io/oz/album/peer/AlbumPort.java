@@ -27,7 +27,9 @@ public enum AlbumPort implements IPort {
 	album("album.less"),
 	menu("menu.serv"), settings("settings.less"),
 	/** doctree.serv, semantic-doc's doc-tree tier (doctree.jserv's DoctreeTier) */
-	doctree("doctree.serv");
+	doctree("doctree.serv"),
+	/** doctree206.serv, the docs' resources for the doc-tree editor (doctree.jserv's Doctree206Serv) */
+	doctree206("doctree206.serv");
 
 	static {
 		JSONAnsonListener.registFactory(AlbumPort.class, 

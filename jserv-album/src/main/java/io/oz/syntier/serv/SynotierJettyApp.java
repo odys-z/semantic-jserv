@@ -60,6 +60,7 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
+import io.oz.sdoc.Doctree206Serv;
 import io.oz.sdoc.DoctreeDBHelper;
 import io.oz.sdoc.DoctreeTier;
 import io.oz.sdoc.docx.DocxWalker;
@@ -378,15 +379,19 @@ public class SynotierJettyApp implements Daemon {
 
 		DBSynTransBuilder.synSemantics(new DATranscxt(cfg.synconn), cfg.synconn, synid, regists);
 
+		// semantic-doc's doc-tree tier, and its resources (pictures) for the editor, reading its working copy
+		DoctreeTier doctree = new DoctreeTier(SynDocollPort.doctree)
+				.conn(DoctreeDBHelper.connect(webinf, settings.volume, synid), synid)
+				.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks);
+
 		return registerPorts(synapp, cfg.synconn,
 				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
 				new AlbumEcho(settings, cfg), new HeartLink(),
 				new SynDocollects(cfg.sysconn, synapp.syngleton.domanager(cfg.domain), cfg, settings))
 			.addDocServPort(cfg, regists.syntities)
 			.addSynodetier(synapp, cfg)
-			.addServPort(new DoctreeTier(SynDocollPort.doctree)
-					.conn(DoctreeDBHelper.connect(webinf, settings.volume, synid), synid)
-					.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks))
+			.addServPort(doctree)
+			.addServPort(new Doctree206Serv(SynDocollPort.doctree206, doctree))
 			.allowCors(synapp.schandler)
 			;
 	}
