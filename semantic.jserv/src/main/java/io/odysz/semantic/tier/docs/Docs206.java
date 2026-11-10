@@ -399,7 +399,7 @@ public abstract class Docs206 {
 	/**
 	 * Returns true (not matched or older than modified) if it's a conditional request which must return 412.
 	 */
-	private static boolean preconditionFailed(HttpServletRequest request, Resource resource) {
+	protected static boolean preconditionFailed(HttpServletRequest request, Resource resource) {
 		String match = request.getHeader("If-Match");
 		long unmodified = request.getDateHeader("If-Unmodified-Since");
 		return (match != null)
@@ -410,7 +410,7 @@ public abstract class Docs206 {
 	/**
 	 * Set cache headers.
 	 */
-	static void setCacheHeaders(HttpServletResponse response, Resource resource) {
+	protected static void setCacheHeaders(HttpServletResponse response, Resource resource) {
 		setCacheHeaders(response, Expire_1Hour);
 		response.setHeader("ETag", resource.eTag);
 		response.setDateHeader("Last-Modified", resource.lastModified);
@@ -446,7 +446,7 @@ public abstract class Docs206 {
 	/**
 	 * Returns true if it's a conditional request which must return 304.
 	 */
-	static boolean notModified(HttpServletRequest request, Resource resource) {
+	protected static boolean notModified(HttpServletRequest request, Resource resource) {
 		String noMatch = request.getHeader(JProtocol.Headers.If_none_match);
 		long modified = request.getDateHeader(JProtocol.Headers.If_modified_since);
 		return (noMatch != null)
@@ -460,7 +460,7 @@ public abstract class Docs206 {
 	 * If this is null, then we must return 416;<br>
 	 * if this is empty, then we must return full file.
 	 */
-	static List<Range> getRanges(HttpServletRequest request, Resource resource) {
+	protected static List<Range> getRanges(HttpServletRequest request, Resource resource) {
 		List<Range> ranges = new ArrayList<>(1);
 		String rangeHeader = request.getHeader(JProtocol.Headers.Range);
 
@@ -536,7 +536,7 @@ public abstract class Docs206 {
 	 * Set content headers.
 	 * @throws UnsupportedEncodingException 
 	 */
-	private static String setContentHeaders(HttpServletRequest request, HttpServletResponse response, Resource resource, List<Range> ranges)
+	protected static String setContentHeaders(HttpServletRequest request, HttpServletResponse response, Resource resource, List<Range> ranges)
 			throws UnsupportedEncodingException {
 		String contentType = getContentType(request, resource.file);
 		String filename = resource.file.getName();
@@ -629,11 +629,11 @@ public abstract class Docs206 {
 	/**
 	 * File Resource.
 	 */
-	static class Resource {
-		final File file;
-		final long length;
-		final long lastModified;
-		final String eTag;
+	protected static class Resource {
+		public final File file;
+		public final long length;
+		public final long lastModified;
+		public final String eTag;
 
 		public Resource(File file, String docId) throws UnsupportedEncodingException {
 			if (file != null && file.isFile()) {
@@ -655,10 +655,10 @@ public abstract class Docs206 {
 		}
 	}
 
-	static class Range extends Anson {
-		long start;
-		long end;
-		long length;
+	protected static class Range extends Anson {
+		protected long start;
+		protected long end;
+		protected long length;
 		
 		public Range() {
 			super();
