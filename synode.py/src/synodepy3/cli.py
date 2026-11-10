@@ -90,11 +90,14 @@ def upgrade_srv(zip_path: str = None):
         Note: The offline RDBMS synchronization is still essential, as a PC can be shutting down while uploading a doc.
     """
     args = sys.argv[1:]
+    # --sandbox: refresh a sandbox (a debugging copy, settings.json's "sandbox" set), no services
+    sandbox = '--sandbox' in args
+    args = [a for a in args if a != '--sandbox']
     zpath = zip_path if zip_path is not None else (args[0] if args else None)
     if zpath is None:
-        print('Usage: synode-upgrade-srv <path-to-update.zip or .tar.gz>')
+        print('Usage: synode-upgrade-srv [--sandbox] <path-to-update.zip or .tar.gz>')
         return
-    update_srv(posix_path(zpath))
+    update_srv(posix_path(zpath), sandbox)
 
 
 def startweb(port: int = 8900):

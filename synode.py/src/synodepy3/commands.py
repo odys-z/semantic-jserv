@@ -15,7 +15,7 @@ from typing import cast, Optional
 
 from anson.io.odysz.common import Utils, LangExt
 from invoke import task
-from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db
+from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db, doctree_db
 
 from .__version__ import jar_ver
 
@@ -49,8 +49,10 @@ def run_jserv(c, bin = 'bin'):
 
 
 
-def installed_settings_error(cli: InstallerCli) -> Optional[str]:
+def installed_settings_error(cli: InstallerCli, sandbox: bool = False) -> Optional[str]:
     """
+    :param sandbox: checking for a sandbox refresh (update_srv(sandbox=True)): settings.json must be
+        a sandbox's; else it must not be one
     :return: why WEB-INF/settings.json is not an installed synode's (see update_srv() step 0), or None
     """
     st = cli.settings
@@ -59,12 +61,16 @@ def installed_settings_error(cli: InstallerCli) -> Optional[str]:
         errs.append(f'volume is not an absolute path: {st.volume}')
     if not LangExt.isblank(st.installkey) or LangExt.isblank(st.rootkey):
         errs.append('installkey is set or rootkey is empty, the synode has never been set up with it')
-    if not LangExt.isblank(st.sandbox):
-        errs.append(f'sandbox is "{st.sandbox}", a debugging copy, which must never be upgraded as a service')
-    return f'{web_inf}/{settings_json} is not an installed synode\'s: {"; ".join(errs)}.' if errs else None
+    if sandbox and LangExt.isblank(st.sandbox):
+        errs.append('sandbox is not set: a real synode, which is upgraded as a service (without --sandbox)')
+    if not sandbox and not LangExt.isblank(st.sandbox):
+        errs.append(f'sandbox is "{st.sandbox}", a debugging copy, which must never be upgraded as a service '
+                    f'(refresh it with --sandbox)')
+    what = 'a sandbox\'s' if sandbox else 'an installed synode\'s'
+    return f'{web_inf}/{settings_json} is not {what}: {"; ".join(errs)}.' if errs else None
 
 
-def update_srv(pkg_path: str):
+def update_srv(pkg_path: str, sandbox: bool = False):
     """
     Update a running Synode install in-place, in the installation folder (cwd):
       0. check WEB-INF/settings.json is an installed synode's: absolute volume, installkey cleared,
@@ -77,7 +83,7 @@ def update_srv(pkg_path: str):
          (installer_api.desktop_running())
       1. stop the 2 services saved in settings.json (Windows services, or Linux systemd units,
          which stay installed); nothing is upgraded if they can't be stopped
-      2. back up vol/dictionary.json, vol/*.db, WEB-INF/settings.json, WEB-INF/html-service.json
+      2. back up vol/dictionary.json, vol/*.db (incl. doctree.db), WEB-INF/settings.json, WEB-INF/html-service.json
          and web-dist/private/host.json into a dated backup-YYYYMMDD/ folder,
          preserving each file's exact relative sub-path
          (vol = WEB-INF/settings.json's "volume")
@@ -98,7 +104,14 @@ def update_srv(pkg_path: str):
       No step asks the user. Linux: sudo asks for a password only if it needs one; Windows: installing
       services needs the administrator, asked once (UAC) unless upgrade.exe runs as one.
 
+    Sandbox refresh (sandbox=True, synode-upgrade-srv --sandbox): a sandbox (settings.json's
+    "sandbox" set, a debugging copy run in an IDE, see AppSettings.sandbox) gets the package's files,
+    e.g. WEB-INF/semantics-*.xml, the same way, keeping its settings.json (sandbox included), html-service.json,
+    host.json, dictionary.json and dbs: steps 0, 2, 3 and 4 only. It has no services, so steps 1, 5
+    and 6 are skipped; stop the sandbox before, start it again after.
+
     :param pkg_path: path to the update package, zip on Windows, tar.gz on Linux.
+    :param sandbox: refresh a sandbox, see above
     """
     if not os.path.isfile(pkg_path):
         print(f'Error: update package not found: {pkg_path}')
@@ -112,7 +125,7 @@ def update_srv(pkg_path: str):
     #    A relative volume is resolved by the synode against WEB-INF but by Volume() against cwd, so the
     #    backup would miss the synode's files; and an installkey would make the synode set up the dbs
     #    again. Such a settings.json is likely a package's template unpacked over the installed one.
-    why = installed_settings_error(cli)
+    why = installed_settings_error(cli, sandbox)
     if why:
         print(f'Error: {why}\n  The installed one may be found in {web_inf}/{settings_json}-fingerprint, '
               f'written by the synode at its first start, or in a backup-*/ folder.\n'
@@ -152,9 +165,11 @@ def update_srv(pkg_path: str):
 
     backup_dir = f'backup-{datetime.now().strftime("%Y%m%d")}'
 
-    # 1. stop services
+    # 1. stop services (a sandbox has none: stopped by the user, in the IDE)
     sudo, units = None, None
-    if Utils.iswindows():
+    if sandbox:
+        print('Sandbox: no services to stop. Make sure the sandbox is not running.')
+    elif Utils.iswindows():
         if not stop_winsrvs():
             return
     else:
@@ -190,6 +205,7 @@ def update_srv(pkg_path: str):
     stash(vol, dictionary_json)
     stash(vol, sys_db)
     stash(vol, syn_db)
+    stash(vol, doctree_db)  # semantic-doc's working copy (doctree.jserv's DoctreeDBHelper.dbfile)
     stash(web_inf, settings_json)
     stash(web_inf, html_service_json)
     stash(album_web_dist, web_host_json)
@@ -226,6 +242,12 @@ def update_srv(pkg_path: str):
         else:
             restored = False
             print(f'Error: {orig} is not the same as its backup {backed}', file=sys.stderr)
+
+    if sandbox:
+        ok = unpacked and restored
+        print(f'Sandbox refresh {"complete" if ok else "FAILED"}, settings.json kept (sandbox "{cli.settings.sandbox}"). '
+              f'Backup kept at: {os.path.abspath(backup_dir)}')
+        return
 
     # 5. point the services to the new package's files, restart them
     new_res = load_resources() if unpacked else None
