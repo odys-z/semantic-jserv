@@ -17,9 +17,9 @@ _independent = bool(_tasks & {'github-head', 'gh-release'})
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.12")
     requir_pkg("semantics.py3", "0.6.19") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release
-    requir_pkg("anclient.py3", "0.2.8")
 
 if 'install-py-local' not in _tasks and not _independent:
+    requir_pkg("anclient.py3", "0.2.8")
     requir_pkg("build")               # by synode.py
     requir_pkg("pyinstaller")         # by synode.py
     requir_pkg("jre-mirror", "0.1.2") # by synode.py
@@ -34,6 +34,7 @@ if 'install-maven-local' not in _tasks and not _independent:
     mvn.requir_installed("io.github.odys-z:anclient.java", "[0.5.24,)")
     mvn.requir_installed("io.github.odys-z:semantic.jserv", "[1.5.21,)")
     mvn.requir_installed("io.github.odys-z:docsync.jserv", "[0.3.6,)")
+    mvn.requir_installed("io.github.odys-z:html-web", "[0.2.1,)")
     mvn.requir_installed("io.github.odys-z:ws-agent", "[0.2.1,)")
 
 from semanticshare.io.oz.invoke import SynodeTask
