@@ -36,7 +36,10 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 class ServPort6Test {
 
-	/** An echo port on Servlet 6.0 */
+	/**
+	 * An echo port on Servlet 6.0
+	 * TODO: move to main, and use optional Jetty EE10 dependency.
+	 * */
 	static class Echo6 extends ServPort6<EchoReq> {
 		private static final long serialVersionUID = 1L;
 
