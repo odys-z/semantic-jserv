@@ -61,6 +61,8 @@ import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.sdoc.DoctreeDBHelper;
+import io.oz.sdoc.publish.ResPublishTier;
+import io.oz.sdoc.publish.ResPublisher;
 import io.oz.sdoc.tier.DoctreeTier;
 import io.oz.sdoc.docx.DocxWalker;
 import io.oz.sdoc.imports.DocxSource;
@@ -382,7 +384,9 @@ public class SynotierJettyApp implements Daemon {
 		// semantic-doc's doc-tree tier, and its resources (pictures) for the editor, reading its working copy
 		DoctreeTier doctree = new DoctreeTier(SynDocollPort.doctree)
 				.conn(DoctreeDBHelper.connect(webinf, settings.volume, synid), synid)
-				.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks);
+				.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks)
+				// docs are published at the html-service of this machine (loopback: its port is localhost only)
+				.publisher(new ResPublisher(f("http://127.0.0.1:%s", settings.webport), SynDocollPort.respaths));
 
 		return registerPorts(synapp, cfg.synconn,
 				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
@@ -392,6 +396,7 @@ public class SynotierJettyApp implements Daemon {
 			.addSynodetier(synapp, cfg)
 			.addServPort(doctree)
 			.addServPort(new Doctree206Serv(SynDocollPort.doctree206, doctree))
+			.addServPort(new ResPublishTier(SynDocollPort.respub, doctree))
 			.allowCors(synapp.schandler)
 			;
 	}

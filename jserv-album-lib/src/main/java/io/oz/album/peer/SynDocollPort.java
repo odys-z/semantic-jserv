@@ -45,6 +45,20 @@ public enum SynDocollPort implements IPort {
 	doctree206("doctree206.serv"),
 
 	/**
+	 * respub.less, the synode's port for the local html-service (doctree.jserv's ResPublishTier):
+	 * html-service queries the docs published. No session, localhost only.
+	 * The name and url must be the same as html-service's HtmlPort.respub.
+	 */
+	respub("respub.less"),
+
+	/**
+	 * respaths.serv, the local html-service's port (io.oz.srv.ResPathsTier), not a port of synodes:
+	 * for the synode's requests of publishing / removing docs (doctree.jserv's ResPublisher).
+	 * The name and url must be the same as html-service's HtmlPort.respaths.
+	 */
+	respaths("respaths.serv"),
+
+	/**
 	 * By forcing understanding Centralport.register, can accept response from central.
 	 * But this is not correct, and is not possible to fix if anson.java cannot parse multiple
 	 * enum classes for the same field.
