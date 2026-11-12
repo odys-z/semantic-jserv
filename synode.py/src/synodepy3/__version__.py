@@ -2,6 +2,6 @@
 synode_ver = "0.8.2"  # portfolio version
 jar_ver = "0.8.2"     # jserv-albm-#.#.#.jar
 web_ver = "0.4.5"     # web-dist/album-#.#.#.jar
-html_srver = "0.2.0"  # html-service-#.#.#.jar
+html_srver = "0.2.1"  # html-service-#.#.#.jar
 desktop_ver = "0.1.2"
 ipcagent_ver = "0.2.1"

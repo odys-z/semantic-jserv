@@ -2,8 +2,8 @@
   "type": "io.oz.srv.WebConfig",
   "port": 1989,
   "paths": [{
-    "type": "io.oz.srv.ResPath",
-    "path": "/",
+    "type": "io.oz.srv.StaticResource",
+    "path": "/*",
     "resource": "web-dist",
     "allowDir": false
   }],

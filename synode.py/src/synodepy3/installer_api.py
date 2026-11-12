@@ -25,7 +25,7 @@ from typing import List, cast, Optional, Callable, Final, Iterable, Tuple
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
 
-from semanticshare.io.oz.srv import WebConfig
+from semanticshare.io.oz.srv import WebConfig, DynaResource
 
 from semanticshare.io.odysz.semantic.jprotocol import MsgCode, AnsonMsg, JProtocol, JServUrl
 from semanticshare.io.odysz.semantic.jserv.crud import SsException
@@ -1314,6 +1314,14 @@ class InstallerCli:
         except: web_cfg = WebConfig()
 
         web_cfg.port = settings.webport
+
+        # the docs published by this installation's synode (html-web 0.2.1, io.oz.srv.ResPathsTier):
+        # html-service asks the synode at this machine; an upgraded installation gets the same
+        # by its package's bin/resource.json, upgrades
+        if web_cfg.dynaResource is None:
+            web_cfg.dynaResource = DynaResource()
+        web_cfg.dynaResource.synode = f'http://127.0.0.1:{settings.port}/{jserv_album}'
+
         web_cfg.toFile(jsn_path)
 
     def stop_web(self):
