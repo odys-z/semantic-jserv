@@ -101,7 +101,7 @@
 		<!-- semantic-doc's doc-tree tier, github semantic-doc/doctree.jserv, not published yet -->
 	    <groupId>io.github.odys-z</groupId>
 	    <artifactId>doctree.jserv</artifactId>
-	    <version>[0.1.1,)</version>
+	    <version>[0.1.2,)</version>
 	</dependency>
 
 	<dependency>
