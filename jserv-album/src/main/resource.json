@@ -1,0 +1,47 @@
+{
+  "type": "io.oz.syn.pkgresource.PkgResources",
+  "//": "The package's manifest, packed as bin/resource.json (semanticshare PkgResources). files and versions are written by tasks.py package(), from tasks.*.json; the rest is written here by hand.",
+  "files": {
+    "synode": "bin/jserv-album-0.8.2.jar",
+    "html-web": "bin/html-web-0.2.1.jar",
+    "synode.py": "bin/synode_py3-0.8.2-py3-none-any.whl"
+  },
+  "versions": {
+    "jar_ver": "0.8.2",
+    "web_ver": "0.4.5",
+    "html_srver": "0.2.1",
+    "synodepy3": "0.8.2"
+  },
+  "// upgrade_from": "the installed versions this package upgrades, both inclusive and optional",
+  "upgrade_from": {
+    "min": "0.8.0"
+  },
+  "// upgrader": "the oldest upgrade tool (synodepy3) that installs this package",
+  "upgrader": {
+    "min": "0.8.2"
+  },
+  "// upgrades": "Upgrades of the configuration files an upgrade keeps (semanticshare ConfigUpgrades). since: the minimum installed version an entry applies to; entries accumulate, the oldest first. replace: renamed values; add: what is missing, never changing what is there. {settings.x}: a value of the installed WEB-INF/settings.json.",
+  "upgrades": [
+    {
+      "since": "0.8.0",
+      "files": {
+        "WEB-INF/html-service.json": {
+          "replace": {
+            "io.oz.srv.ResPath": "io.oz.srv.StaticResource"
+          },
+          "add": {
+            "dynaResource": {
+              "type": "io.oz.srv.DynaResource",
+              "handler": "io.oz.srv.ResPathsTier",
+              "synode": "http://127.0.0.1:{settings.port}/jserv-album",
+              "pollInterval_snd": 3600,
+              "resource": "respaths",
+              "danyroot": "pub",
+              "allowDir": false
+            }
+          }
+        }
+      }
+    }
+  ]
+}
