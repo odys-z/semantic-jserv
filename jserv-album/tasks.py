@@ -16,7 +16,7 @@ _independent = bool(_tasks & {'github-head', 'gh-release'})
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.12")
-    requir_pkg("semantics.py3", "0.6.19") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release
+    requir_pkg("semantics.py3", "0.6.20") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load()
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("anclient.py3", "0.2.8")
@@ -38,6 +38,7 @@ if 'install-maven-local' not in _tasks and not _independent:
     mvn.requir_installed("io.github.odys-z:ws-agent", "[0.2.1,)")
 
 from semanticshare.io.oz.invoke import SynodeTask
+from semanticshare.io.oz.syn.pkgresource import PkgResources
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
 
 from anson.io.odysz.common import LangExt, Utils
@@ -97,8 +98,8 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
     print('taskcfg:', taskcfg.deploy.orgid, taskcfg.version)
 
     # was checked at module level, now paths are from taskcfg
-    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/anreact', '0.8.0')
-    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/semantier', '1.1.0')
+    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/anreact', '0.8.1')
+    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/semantier', '1.1.1')
 
     # ISSUE central-uid: Synodes log in central as deploy.admin (synusr.uid()), not centralUid.
     # 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
@@ -583,26 +584,37 @@ def package(c: Context, deploy: str = 'tasks.json'):
 
     readme_md = gen_readme()
 
-    # The package's manifest, bin/resource.json (semanticshare PkgResources, from SynodeTask.pkg_res()):
-    # its files are the keys of resources, so they are packed by the same names.
-    manifest = taskcfg.pkg_res()
-
+    # The package's manifest, bin/resource.json (semanticshare PkgResources): its files are the keys of
+    # resources, so they are packed by the same names.
     def gen_resource_json() -> str:
         """
-        Write bin/resource.json, the package's manifest: the files, the versions (the Windows service names
-        are made of), and upgrade_from (tasks.*.json, the installed versions it can upgrade). On upgrade,
-        synodepy3 commands.update_srv() checks upgrade_from, compares the installed manifest with the new
-        one, and points the services to the changed files.
-        :return: path of the generated resource.json, in the README's temporary folder
+        Update src/main/resource.json, the source of the package's manifest, bin/resource.json: its
+        files and versions (the Windows service names are made of) are this build's, of tasks.*.json
+        (SynodeTask.pkg_res()). The rest is the file's own, written by hand: upgrade_from (the installed
+        versions it can upgrade), upgrader (the oldest upgrade tool installing it) and upgrades (of the
+        installed configuration files, ConfigUpgrades). On upgrade, synodepy3 commands.update_srv()
+        checks upgrader and upgrade_from, upgrades the kept configuration files, compares the installed
+        manifest with the new one, and points the services to the changed files.
+        :return: path of resource.json
         """
-        js = os.path.join(os.path.dirname(readme_md), 'resource.json')
-        manifest.toFile(js)
-        return js
+        import json
+        with open(resource_src, encoding='utf-8') as f:
+            res = json.load(f)
+        built = taskcfg.pkg_res()
+        res['files'], res['versions'] = dict(built.files), dict(built.versions)
+        with open(resource_src, 'w', encoding='utf-8') as f:
+            json.dump(res, f, indent=2, ensure_ascii=False)
+            f.write('\n')
+        return resource_src
+
+    resource_src = os.path.join('src', 'main', 'resource.json')
+    resource_json = gen_resource_json()
+    manifest = PkgResources.load(resource_json)
 
     resources = {
         manifest.file('html-web'): f'{html_target}/{taskcfg.htmlweb_jar()}', # clone at github/html-service
         manifest.file('synode'): f'target/{taskcfg.synode_jar()}',
-        'bin/resource.json': gen_resource_json(),
+        'bin/resource.json': resource_json,
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
