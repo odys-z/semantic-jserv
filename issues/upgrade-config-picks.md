@@ -1,12 +1,14 @@
 # ISSUE upgrade-config-picks: the upgrade keeps configuration files by a pick list, not by versioned entries
 
 - Found: 2026-11-13, Portfolio 0.8.2 (in development)
-- Status: open. To do before the next release: replace `ConfigUpgrades` (the versioned `upgrades` of
-  `bin/resource.json`) with a pick list, and add the CI test and the generated markdown below.
-- Tags: `ISSUE upgrade-config-picks` to be put in
-  - `synode.py/src/synodepy3/commands.py`, `update_srv()` step 4 and `upgrade_configs()`
-  - `jserv-album/src/main/resource.json`, `upgrades`
-  - semantics.py3 (github antson) `semanticshare/io/oz/syn/pkgresource.py`, `ConfigUpgrades`, `PkgResources.upgrades`
+- Status: to do 1-3 done 2026-11-13 (semantics.py3 `ConfigPicks`, `PkgResources.config_picks` / `pick_config()`;
+  synode.py `update_srv()` step 4; `resource.json` `config_picks`; dynaResource's defaults in the template
+  `WEB-INF-0.8/html-service.json`; html-service's `DynaResource.synode` -> `syn_jserv`).
+  Open before the next release: 4-6, the CI test of history fixtures and the generated markdown.
+- Tags: `ISSUE upgrade-config-picks` in
+  - `synode.py/src/synodepy3/commands.py`, `update_srv()` step 4
+  - `jserv-album/src/main/resource.json`, `// config_picks`
+  - semantics.py3 (github antson) `semanticshare/io/oz/syn/pkgresource.py`, `ConfigPicks`, `PkgResources.config_picks`
 
 ## The problem
 

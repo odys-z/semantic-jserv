@@ -20,28 +20,24 @@
   "upgrader": {
     "min": "0.8.2"
   },
-  "// upgrades": "Upgrades of the configuration files an upgrade keeps (semanticshare ConfigUpgrades). since: the minimum installed version an entry applies to; entries accumulate, the oldest first. replace: renamed values; add: what is missing, never changing what is there. {settings.x}: a value of the installed WEB-INF/settings.json.",
-  "upgrades": [
-    {
-      "since": "0.8.0",
-      "files": {
-        "WEB-INF/html-service.json": {
-          "replace": {
-            "io.oz.srv.ResPath": "io.oz.srv.StaticResource"
-          },
-          "add": {
-            "dynaResource": {
-              "type": "io.oz.srv.DynaResource",
-              "handler": "io.oz.srv.ResPathsTier",
-              "synode": "http://127.0.0.1:{settings.port}/jserv-album",
-              "pollInterval_snd": 3600,
-              "resource": "respaths",
-              "danyroot": "pub",
-              "allowDir": false
-            }
-          }
-        }
-      }
+  "// config_picks": "The configuration files an upgrade makes of this package's file (the template) and the installed values of the fields listed: {file: {field: [the names it ever had, the newest first]}} (semanticshare ConfigPicks). Everything else is the new version's: new fields, default values, renamed types. A file not listed is kept as installed. Values the installer computes are not listed: html-service's port and dynaResource.syn_jserv, of settings.json. ISSUE upgrade-config-picks.",
+  "config_picks": {
+    "WEB-INF/html-service.json": {
+      "welcomepages": [
+        "welcomepages"
+      ],
+      "dynaResource.pollInterval_snd": [
+        "dynaResource.pollInterval_snd"
+      ],
+      "dynaResource.allowDir": [
+        "dynaResource.allowDir"
+      ],
+      "dynaResource.resource": [
+        "dynaResource.resource"
+      ],
+      "dynaResource.danyroot": [
+        "dynaResource.danyroot"
+      ]
     }
-  ]
+  }
 }
