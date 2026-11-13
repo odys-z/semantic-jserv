@@ -1,11 +1,11 @@
 # ISSUE sdoc-sphinx-venv: synodes build docs' html with the Sphinx of the installer's venv
 
 - Found: 2026-11-13, Portfolio 0.8.2 (in development)
-- Status: decided, to be implemented
-- Tags: `ISSUE sdoc-sphinx-venv` to be put in
+- Status: implemented 2026-11-13 (patches on antson a1e7613, semantic-jserv 6ca2126, html-service 2ef5aef)
+- Tags: `ISSUE sdoc-sphinx-venv` in
   - `synode.py/pyproject.toml`, the Sphinx dependencies
-  - `synode.py/src/synodepy3/prerequisites.py`, the Sphinx check
-  - `synode.py/src/synodepy3/installer_api.py` and `commands.py`, where `sdocSphinx` is written
+  - `synode.py/src/synodepy3/sdoc.py`, `sphinx_of_installer()`, `build_pages()`
+  - `synode.py/src/synodepy3/installer_api.py` `install()`, `commands.py` `update_srv()`
   - `docsync.jserv` `AppSettings.sdocSphinx`; `jserv-album` `SynotierJettyApp`, where the builder is wired
 
 ## What changes for an installation
@@ -47,14 +47,25 @@ Windows is not changed: Sphinx will be packed in the Windows distribution.
 
 3. `sdocSphinx` is a value the installer computes, as html-service's port and `dynaResource.syn_jserv`:
    - a new installation: the installer (running in the venv) writes `<sys.prefix>/bin/sphinx-build`;
-   - an upgrade: the upgrade tool (running in the venv) writes it again, as `settings.json` is kept;
-   - a developer's sandbox: the default, `sphinx-build` in PATH, or the path set by hand.
+   - an upgrade, a sandbox's too: the upgrade tool (running in the venv) writes it again, in the kept
+     `settings.json`, changing only this value;
+   - no sphinx-build in the environment (Windows until Sphinx is packed): the value is kept, or the default.
 
-4. Usable means: a tiny build, a one-line `index.rst` with the installed template, succeeds. It checks
-   Sphinx, the theme and docutils together, in the environment of `sdocSphinx` (about a second).
-   - synode.py `check_prerequisites()`, at installing and upgrading: a warning, not an error;
-   - the synode, at start: if it fails, a warning, and the builder is not wired (commits still work).
-   The warning tells how to install: `<venv>/bin/pip install sphinx sphinx_rtd_theme docutils`.
+4. Usable, checked twice:
+   - synode.py, installing and upgrading: a build with the installed template, which also makes
+     html-service's two pages in the web-dist root, `status.html` and `404.html` (Portfolio version,
+     synode id, OS, date, Sphinx version, template id). It checks Sphinx, the theme and docutils together,
+     in about two seconds. The pages link the template's files, `/sdoc-template/<id>/_static/`. If it
+     fails: a warning, the pages already there are kept.
+   - the synode, at start: `<sdocSphinx> --version`. If it fails: a warning, and the builder is not wired
+     (commits still work).
+   The warnings tell how to install: `<venv>/bin/pip install sphinx sphinx_rtd_theme docutils`.
+
+5. html-service (html-web 0.2.1):
+   - `"notfound": "/404.html"` in html-service.json: the page of every 404, the status kept 404. A
+     release value, in the template, not picked.
+   - The published docs' folder is no longer emptied at start: the docs stay online when the synode
+     can't be reached; when it can, the folders of docs it no longer publishes are removed.
 
 ## Not taken
 
