@@ -17,7 +17,9 @@ from anson.io.odysz.common import Utils, LangExt
 from invoke import task
 from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db, doctree_db
 
-from .__version__ import jar_ver
+from semanticshare.io.oz.syn.pkgresource import PkgResources
+
+from .__version__ import jar_ver, synode_ver
 
 from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_res, \
     resource_json, InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
@@ -70,13 +72,38 @@ def installed_settings_error(cli: InstallerCli, sandbox: bool = False) -> Option
     return f'{web_inf}/{settings_json} is not {what}: {"; ".join(errs)}.' if errs else None
 
 
+def upgrade_configs(cli: InstallerCli, res: PkgResources, installed_ver: Optional[str], basedir: str = '.') -> bool:
+    """
+    Upgrade the installed configuration files, kept by an upgrade, as the new package's manifest
+    tells: every entry of its upgrades (bin/resource.json, semanticshare ConfigUpgrades) since a
+    version not newer than the installed one. Values like {settings.port} are the installed
+    WEB-INF/settings.json's.
+
+    :param res: the new package's manifest
+    :param installed_ver: the version upgraded from (jar_ver)
+    :return: False if a file can't be upgraded: reported, the files already upgraded are kept
+    """
+    env = {f'settings.{k}': v for k, v in vars(cli.settings).items()
+           if isinstance(v, (str, int, float)) and not isinstance(v, bool)}
+    try:
+        for f in res.upgrade_configs(installed_ver, basedir, env):
+            print(f'Upgraded: {f}')
+        return True
+    except ValueError as e:
+        print(f'Error: cannot upgrade the configuration files: {e}\n'
+              f'  The services are started with the files as they are. Fix them as {resource_json}/upgrades tells.',
+              file=sys.stderr)
+        return False
+
+
 def update_srv(pkg_path: str, sandbox: bool = False):
     """
     Update a running Synode install in-place, in the installation folder (cwd):
       0. check WEB-INF/settings.json is an installed synode's: absolute volume, installkey cleared,
          rootkey set and no sandbox (installed_settings_error()), not e.g. a package template unpacked
          over it, nor a debugging copy;
-         check the new package accepts the installed version: its bin/resource.json upgrade_from
+         check the new package accepts this upgrade tool: its bin/resource.json upgrader {min}
+         (PkgResources.refuses_upgrader()), and the installed version: upgrade_from
          {min, max}, and no downgrade (PkgResources.refuses()); read out of the package, before
          anything is stopped or changed, so a refused upgrade changes nothing;
          Windows: wait until the desktop app (desktop/album_gui.exe) is closed, asking the user
@@ -92,7 +119,10 @@ def update_srv(pkg_path: str, sandbox: bool = False):
       3. unpack pkg_path over the current working directory
          (Windows: *.zip; Linux: *.tar.gz, by tar -xf)
       4. copy the backed-up files back, over the package's ones (so the new package doesn't clobber
-         local data/config), and verify each copy
+         local data/config), and verify each copy;
+         then upgrade the kept configuration files as the new package's bin/resource.json tells
+         (its upgrades, semanticshare ConfigUpgrades, see upgrade_configs()): what the new version
+         needs in WEB-INF/settings.json, html-service.json, e.g. a renamed type or a new section
       5. point the services to the new package's files, by comparing its bin/resource.json with the
          installed one, and restart them:
          Linux: replace the changed jar paths in the unit files (linunits.apply_unit_resources());
@@ -107,7 +137,8 @@ def update_srv(pkg_path: str, sandbox: bool = False):
     Sandbox refresh (sandbox=True, synode-upgrade-srv --sandbox): a sandbox (settings.json's
     "sandbox" set, a debugging copy run in an IDE, see AppSettings.sandbox) gets the package's files,
     e.g. WEB-INF/semantics-*.xml, the same way, keeping its settings.json (sandbox included), html-service.json,
-    host.json, dictionary.json and dbs: steps 0, 2, 3 and 4 only. It has no services, so steps 1, 5
+    host.json, dictionary.json and dbs: steps 0, 2, 3 and 4 only, and its configuration files are not
+    upgraded (step 4), they are the developer's. It has no services, so steps 1, 5
     and 6 are skipped; stop the sandbox before, start it again after.
 
     :param pkg_path: path to the update package, zip on Windows, tar.gz on Linux.
@@ -145,7 +176,7 @@ def update_srv(pkg_path: str, sandbox: bool = False):
     if pkg_res is None:
         print(f'Warning: the package has no {resource_json}, its versions are not checked.', file=sys.stderr)
     else:
-        why = pkg_res.refuses(installed.jar_ver())
+        why = pkg_res.refuses_upgrader(synode_ver) or pkg_res.refuses(installed.jar_ver())
         if why:
             print(f'Upgrade refused: {why}.\nNothing is changed.', file=sys.stderr)
             return
@@ -251,6 +282,10 @@ def update_srv(pkg_path: str, sandbox: bool = False):
 
     # 5. point the services to the new package's files, restart them
     new_res = load_resources() if unpacked else None
+
+    # 4. (continued) the kept configuration files, upgraded for the new version
+    if new_res is not None and restored:
+        upgrade_configs(cli, new_res, installed.jar_ver())
     if unpacked and new_res is None:
         print(f'Warning: the package has no {resource_json}, the services are kept as they were.', file=sys.stderr)
     if new_res is not None:
