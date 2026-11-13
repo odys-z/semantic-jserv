@@ -17,8 +17,6 @@ from anson.io.odysz.common import Utils, LangExt
 from invoke import task
 from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db, doctree_db
 
-from semanticshare.io.oz.syn.pkgresource import PkgResources
-
 from .__version__ import jar_ver, synode_ver
 
 from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_res, \
@@ -72,30 +70,6 @@ def installed_settings_error(cli: InstallerCli, sandbox: bool = False) -> Option
     return f'{web_inf}/{settings_json} is not {what}: {"; ".join(errs)}.' if errs else None
 
 
-def upgrade_configs(cli: InstallerCli, res: PkgResources, installed_ver: Optional[str], basedir: str = '.') -> bool:
-    """
-    Upgrade the installed configuration files, kept by an upgrade, as the new package's manifest
-    tells: every entry of its upgrades (bin/resource.json, semanticshare ConfigUpgrades) since a
-    version not newer than the installed one. Values like {settings.port} are the installed
-    WEB-INF/settings.json's.
-
-    :param res: the new package's manifest
-    :param installed_ver: the version upgraded from (jar_ver)
-    :return: False if a file can't be upgraded: reported, the files already upgraded are kept
-    """
-    env = {f'settings.{k}': v for k, v in vars(cli.settings).items()
-           if isinstance(v, (str, int, float)) and not isinstance(v, bool)}
-    try:
-        for f in res.upgrade_configs(installed_ver, basedir, env):
-            print(f'Upgraded: {f}')
-        return True
-    except ValueError as e:
-        print(f'Error: cannot upgrade the configuration files: {e}\n'
-              f'  The services are started with the files as they are. Fix them as {resource_json}/upgrades tells.',
-              file=sys.stderr)
-        return False
-
-
 def update_srv(pkg_path: str, sandbox: bool = False):
     """
     Update a running Synode install in-place, in the installation folder (cwd):
@@ -119,10 +93,12 @@ def update_srv(pkg_path: str, sandbox: bool = False):
       3. unpack pkg_path over the current working directory
          (Windows: *.zip; Linux: *.tar.gz, by tar -xf)
       4. copy the backed-up files back, over the package's ones (so the new package doesn't clobber
-         local data/config), and verify each copy;
-         then upgrade the kept configuration files as the new package's bin/resource.json tells
-         (its upgrades, semanticshare ConfigUpgrades, see upgrade_configs()): what the new version
-         needs in WEB-INF/settings.json, html-service.json, e.g. a renamed type or a new section
+         local data/config), and verify each copy; except the configuration files the new package's
+         bin/resource.json picks (config_picks, semanticshare ConfigPicks), e.g. WEB-INF/html-service.json:
+         the package's file, with the installed values of the fields it lists, so new fields, their
+         default values and renamed types are the new version's (PkgResources.pick_config()); then
+         the installer fills its computed values (InstallerCli.update_htmlsrv()).
+         ISSUE upgrade-config-picks (issues/upgrade-config-picks.md)
       5. point the services to the new package's files, by comparing its bin/resource.json with the
          installed one, and restart them:
          Linux: replace the changed jar paths in the unit files (linunits.apply_unit_resources());
@@ -137,8 +113,8 @@ def update_srv(pkg_path: str, sandbox: bool = False):
     Sandbox refresh (sandbox=True, synode-upgrade-srv --sandbox): a sandbox (settings.json's
     "sandbox" set, a debugging copy run in an IDE, see AppSettings.sandbox) gets the package's files,
     e.g. WEB-INF/semantics-*.xml, the same way, keeping its settings.json (sandbox included), html-service.json,
-    host.json, dictionary.json and dbs: steps 0, 2, 3 and 4 only, and its configuration files are not
-    upgraded (step 4), they are the developer's. It has no services, so steps 1, 5
+    host.json, dictionary.json and dbs: steps 0, 2, 3 and 4 only, and its configuration files are
+    kept as they are (no picks, step 4), they are the developer's. It has no services, so steps 1, 5
     and 6 are skipped; stop the sandbox before, start it again after.
 
     :param pkg_path: path to the update package, zip on Windows, tar.gz on Linux.
@@ -264,9 +240,22 @@ def update_srv(pkg_path: str, sandbox: bool = False):
             print(f'Error unpacking {pkg_path}:\n{r.stderr}', file=sys.stderr)
 
     # 4. restore the backed-up files, from their mirrored sub-path back to the original
-    #    (also when tar failed, as rollback of a partial extraction)
-    restored = True
+    #    (also when tar failed, as rollback of a partial extraction);
+    #    a file the package picks is its template with the installed values picked (ISSUE upgrade-config-picks)
+    picks = pkg_res.config_picks if pkg_res is not None and unpacked and not sandbox else {}
+    restored, picked = True, []
     for orig, backed in backups:
+        path = os.path.normpath(orig).replace(os.sep, '/')
+        if path in picks:
+            try:
+                kept, skipped = pkg_res.pick_config(path, orig, backed)
+                picked.append(path)
+                print(f'{path}: the new version\'s, with your {", ".join(kept) or "nothing (none of the fields picked)"}'
+                      + (f'; not taken: {", ".join(skipped)}' if skipped else '')
+                      + f'. Your previous file: {backed}')
+                continue
+            except Exception as e:  # the installed file is kept, as before config_picks
+                print(f'Error: cannot make {path} of the new version: {e}. Yours is kept.', file=sys.stderr)
         Utils.copy_anyway(backed, orig, log=True)
         if filecmp.cmp(backed, orig, shallow=False):
             print(f'Restored: {orig}')
@@ -280,12 +269,15 @@ def update_srv(pkg_path: str, sandbox: bool = False):
               f'Backup kept at: {os.path.abspath(backup_dir)}')
         return
 
+    # 4. (continued) the values the installer computes, e.g. html-service's port, of settings.json
+    if f'{web_inf}/{html_service_json}' in picked:
+        try:
+            InstallerCli.update_htmlsrv(None, cli.settings)
+        except Exception as e:  # whatever it is, the services must be started again
+            print(f'Error: cannot fill {web_inf}/{html_service_json}: {e}', file=sys.stderr)
+
     # 5. point the services to the new package's files, restart them
     new_res = load_resources() if unpacked else None
-
-    # 4. (continued) the kept configuration files, upgraded for the new version
-    if new_res is not None and restored:
-        upgrade_configs(cli, new_res, installed.jar_ver())
     if unpacked and new_res is None:
         print(f'Warning: the package has no {resource_json}, the services are kept as they were.', file=sys.stderr)
     if new_res is not None:

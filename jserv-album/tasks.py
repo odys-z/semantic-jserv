@@ -591,9 +591,10 @@ def package(c: Context, deploy: str = 'tasks.json'):
         Update src/main/resource.json, the source of the package's manifest, bin/resource.json: its
         files and versions (the Windows service names are made of) are this build's, of tasks.*.json
         (SynodeTask.pkg_res()). The rest is the file's own, written by hand: upgrade_from (the installed
-        versions it can upgrade), upgrader (the oldest upgrade tool installing it) and upgrades (of the
-        installed configuration files, ConfigUpgrades). On upgrade, synodepy3 commands.update_srv()
-        checks upgrader and upgrade_from, upgrades the kept configuration files, compares the installed
+        versions it can upgrade), upgrader (the oldest upgrade tool installing it) and config_picks (the
+        configuration files an upgrade makes of the package's template and the installed values,
+        ConfigPicks). On upgrade, synodepy3 commands.update_srv() checks upgrader and upgrade_from,
+        makes the picked configuration files, compares the installed
         manifest with the new one, and points the services to the changed files.
         :return: path of resource.json
         """
