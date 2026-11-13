@@ -3,6 +3,7 @@ import time
 
 # Before anything imports PySide6: on Linux, Qt needs system libraries pip can't install (libEGL.so.1, ...).
 from synodepy3.prerequisites import check_prerequisites
+
 _missing = check_prerequisites(gui=True)
 if _missing and 'Qt runtime' in _missing:
     print(_missing['Qt runtime'], file=sys.stderr)
@@ -33,7 +34,7 @@ from semanticshare.io.oz.syn.registry import AnRegistry, RegistResp, CynodeStats
 from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.winsrv import install_winsrvs, winsrvs_installed
-from synodepy3.installer_api import InstallerCli, web_inf, settings_json, serv_port0, web_port0, err_uihandlers, \
+from synodepy3.installer_api import InstallerCli, serv_port0, web_port0, err_uihandlers, \
     synode_ui, cfgpaths, posix_path, desktop_exe, start_desktop, readable_state, state_mark
 from synodepy3.install_jre import validate_jre
 from synodepy3.jre_downloader import _event_loop_interval_
@@ -260,7 +261,7 @@ class InstallerForm(QMainWindow):
             details.append(self.cli.settings.regiserv + '\n' + 'Error while loading domains.')
             errs = True
         else:
-            return cast(RegistResp, resp)
+            return resp
 
         if has_err():
             warn_msg('Central service cannot be reached.', details)
@@ -372,7 +373,7 @@ class InstallerForm(QMainWindow):
         v = self.cli.validate(ping_timeout=int(self.ui.txtimeout.text()))
         if v is not None:
             global errs, details
-            details.append(v)
+            details.append(str(v))
             errs = True
             self.show_validation(v)
         return v
