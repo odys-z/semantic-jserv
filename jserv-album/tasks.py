@@ -501,7 +501,8 @@ def build(c: Context, deploy: str = 'tasks.json'):
         ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
                 if os.name == 'nt' else f'touch {web_dist}/res-vol/portfolio-{taskcfg.apk_ver}.apk' ], # TODO build apk in Linux...
 
-        [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* report.html'],
+        # both builds of album-web (webpack.config.js): [name].min.js, [name].prod.min.js, with .gz and .map
+        [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* vendor-*.min.js* doctree*.min.js* report.html'],
         [web_root, 'webpack'],
 
         [web_dist, updateApkRes],
