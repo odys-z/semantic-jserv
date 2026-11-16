@@ -21,7 +21,11 @@ dependencies = [
     "psutil",
     "pillow>=10.0.0",
     "prompt_toolkit>=3.0.52",
-    "invoke>=2.2.0"
+    "invoke>=2.2.0",
+    # semantic-doc's html builds, the Sphinx of this venv; on Windows Sphinx is packed (ISSUE sdoc-sphinx-venv)
+    "sphinx>=7; sys_platform != 'win32'",
+    "sphinx_rtd_theme>=2; sys_platform != 'win32'",
+    "docutils; sys_platform != 'win32'"
 ]
 
 [project.scripts]

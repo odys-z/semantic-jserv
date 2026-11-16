@@ -7,9 +7,11 @@ import static io.odysz.common.LangExt.ifnull;
 import static io.odysz.common.LangExt.isNull;
 import static io.odysz.common.LangExt.len;
 import static io.odysz.common.LangExt.mustnonull;
+import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 import static io.odysz.common.Utils.warnT;
 
+import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -61,6 +63,7 @@ import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
 import io.oz.sdoc.DoctreeDBHelper;
+import io.oz.sdoc.build.HtmlBuilder;
 import io.oz.sdoc.publish.ResPublishTier;
 import io.oz.sdoc.publish.ResPublisher;
 import io.oz.sdoc.tier.DoctreeTier;
@@ -388,6 +391,19 @@ public class SynotierJettyApp implements Daemon {
 				// docs are published at the html-service of this machine (loopback: its port is localhost only)
 				.publisher(new ResPublisher(f("http://127.0.0.1:%s", settings.webport), SynDocollPort.respaths));
 
+		// a committed doc's html is built here, with the template and the Sphinx of settings.json (ISSUE sdoc-sphinx-venv)
+		String sdocTemplate = settings.sdocTemplateSource();
+		String sphinx = sphinxVersion(settings.sdocSphinx);
+		if (sdocTemplate == null)
+			warn("No doc template in %s: committed docs are not built to html, nor published.", settings.sdocTemplateRoot);
+		else if (sphinx == null)
+			warn("%s is not usable: committed docs are not built to html, nor published. Install Sphinx in synode.py's venv, "
+				+ "<venv>/bin/pip install sphinx sphinx_rtd_theme docutils, and set settings.json/sdocSphinx.", settings.sdocSphinx);
+		else {
+			logi("[Sphinx] %s: %s", settings.sdocSphinx, sphinx);
+			doctree.builder(new HtmlBuilder(sdocTemplate, settings.sdocSphinx));
+		}
+
 		return registerPorts(synapp, cfg.synconn,
 				AnSession.init(cfg.sysconn), new AnQuery(), new AnUpdate(),
 				new AlbumEcho(settings, cfg), new HeartLink(),
@@ -409,6 +425,24 @@ public class SynotierJettyApp implements Daemon {
 									(c, r, args) -> Utils.warn("[Syn-worker ERROR] code: %s, msg: %s", c, r));
 		addServPort(syncer);
 		return this;
+	}
+
+	/**
+	 * @param sphinx e.g. settings.json/sdocSphinx
+	 * @return what "sphinx --version" prints; null if it can't be run
+	 */
+	static String sphinxVersion(String sphinx) {
+		try {
+			Process p = new ProcessBuilder(sphinx, "--version").redirectErrorStream(true).start();
+			if (!p.waitFor(30, TimeUnit.SECONDS)) {
+				p.destroyForcibly();
+				return null;
+			}
+			String v = new String(p.getInputStream().readAllBytes()).trim();
+			return p.exitValue() == 0 ? v : null;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	SynotierJettyApp loadomains(SynodeConfig cfg, DocUser admin) throws Exception {

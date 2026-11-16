@@ -3,6 +3,7 @@ The upgrade, update_srv() (synode-upgrade-srv / upgrade.exe), for both Windows s
 and Linux systemd units (linunits.py).
 """
 import filecmp
+import json
 import os
 import re
 import signal
@@ -22,6 +23,7 @@ from .__version__ import jar_ver, synode_ver
 from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_res, \
     resource_json, InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
     html_service_json, desktop_exe, desktop_running
+from .sdoc import sphinx_of_installer, build_pages
 from .linunits import Sudo, stop_sysunits, restart_sysunits, apply_unit_resources
 from .winsrv import stop_winsrvs, restart_wsrvs, apply_winsrv_resources
 
@@ -70,6 +72,14 @@ def installed_settings_error(cli: InstallerCli, sandbox: bool = False) -> Option
     return f'{web_inf}/{settings_json} is not {what}: {"; ".join(errs)}.' if errs else None
 
 
+def synode_id(cli: InstallerCli) -> str:
+    ''' :return: the installation's synode id, '' if the registry isn't loaded '''
+    try:
+        return cli.registry.config.synid or ''
+    except Exception:
+        return ''
+
+
 def update_srv(pkg_path: str, sandbox: bool = False):
     """
     Update a running Synode install in-place, in the installation folder (cwd):
@@ -99,6 +109,8 @@ def update_srv(pkg_path: str, sandbox: bool = False):
          default values and renamed types are the new version's (PkgResources.pick_config()); then
          the installer fills its computed values (InstallerCli.update_htmlsrv()).
          ISSUE upgrade-config-picks (issues/upgrade-config-picks.md)
+         Then settings.json's sdocSphinx is this environment's sphinx-build, and html-service's status and
+         404 pages are built with it (ISSUE sdoc-sphinx-venv, sdoc.build_pages()).
       5. point the services to the new package's files, by comparing its bin/resource.json with the
          installed one, and restart them:
          Linux: replace the changed jar paths in the unit files (linunits.apply_unit_resources());
@@ -114,7 +126,7 @@ def update_srv(pkg_path: str, sandbox: bool = False):
     "sandbox" set, a debugging copy run in an IDE, see AppSettings.sandbox) gets the package's files,
     e.g. WEB-INF/semantics-*.xml, the same way, keeping its settings.json (sandbox included), html-service.json,
     host.json, dictionary.json and dbs: steps 0, 2, 3 and 4 only, and its configuration files are
-    kept as they are (no picks, step 4), they are the developer's. It has no services, so steps 1, 5
+    made the same as a real synode's (step 4), so an upgrade can be tried on a sandbox first. It has no services, so steps 1, 5
     and 6 are skipped; stop the sandbox before, start it again after.
 
     :param pkg_path: path to the update package, zip on Windows, tar.gz on Linux.
@@ -242,7 +254,7 @@ def update_srv(pkg_path: str, sandbox: bool = False):
     # 4. restore the backed-up files, from their mirrored sub-path back to the original
     #    (also when tar failed, as rollback of a partial extraction);
     #    a file the package picks is its template with the installed values picked (ISSUE upgrade-config-picks)
-    picks = pkg_res.config_picks if pkg_res is not None and unpacked and not sandbox else {}
+    picks = pkg_res.config_picks if pkg_res is not None and unpacked else {}
     restored, picked = True, []
     for orig, backed in backups:
         path = os.path.normpath(orig).replace(os.sep, '/')
@@ -263,18 +275,35 @@ def update_srv(pkg_path: str, sandbox: bool = False):
             restored = False
             print(f'Error: {orig} is not the same as its backup {backed}', file=sys.stderr)
 
-    if sandbox:
-        ok = unpacked and restored
-        print(f'Sandbox refresh {"complete" if ok else "FAILED"}, settings.json kept (sandbox "{cli.settings.sandbox}"). '
-              f'Backup kept at: {os.path.abspath(backup_dir)}')
-        return
-
-    # 4. (continued) the values the installer computes, e.g. html-service's port, of settings.json
+    # 4. (continued) the values the installer computes, e.g. html-service's port, of settings.json;
+    #    the Sphinx of this environment, and html-service's status and 404 pages (ISSUE sdoc-sphinx-venv)
     if f'{web_inf}/{html_service_json}' in picked:
         try:
             InstallerCli.update_htmlsrv(None, cli.settings)
         except Exception as e:  # whatever it is, the services must be started again
             print(f'Error: cannot fill {web_inf}/{html_service_json}: {e}', file=sys.stderr)
+    if unpacked:
+        try:
+            sphinx = sphinx_of_installer(cli.settings.sdocSphinx)
+            if sphinx != cli.settings.sdocSphinx:
+                # settings.json as plain json: only this value is changed
+                st_path = os.path.join(web_inf, settings_json)
+                with open(st_path, encoding='utf-8') as f:
+                    st = json.load(f)
+                st['sdocSphinx'] = cli.settings.sdocSphinx = sphinx
+                with open(st_path, 'w', encoding='utf-8') as f:
+                    json.dump(st, f, indent=2, ensure_ascii=False)
+            why = build_pages(cli.settings, synode_id(cli), pkg_res.jar_ver() if pkg_res is not None else jar_ver)
+            if why:
+                print(f'Warning: docs can not be built to html, nor published: {why}', file=sys.stderr)
+        except Exception as e:
+            print(f'Warning: docs can not be built to html, nor published: {e}', file=sys.stderr)
+
+    if sandbox:
+        ok = unpacked and restored
+        print(f'Sandbox refresh {"complete" if ok else "FAILED"}, settings.json kept (sandbox "{cli.settings.sandbox}"). '
+              f'Backup kept at: {os.path.abspath(backup_dir)}')
+        return
 
     # 5. point the services to the new package's files, restart them
     new_res = load_resources() if unpacked else None

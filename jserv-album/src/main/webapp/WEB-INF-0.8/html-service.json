@@ -9,5 +9,6 @@
      "resource": "respaths",
      "danyroot": "pub",
      "allowDir": false},
- "comments": "startHandler, since html-web 0.1.3, is used to set host.json 'host: jserv' according to local ip; dynaResource, since html-web 0.2.1: docs published by the synode, syn_jserv is set by the installer"
+ "notfound": "/404.html",
+ "comments": "notfound, since html-web 0.2.1: the page of every 404, built by synode.py with the doc template; startHandler, since html-web 0.1.3, is used to set host.json 'host: jserv' according to local ip; dynaResource, since html-web 0.2.1: docs published by the synode, syn_jserv is set by the installer"
 }

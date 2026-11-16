@@ -101,8 +101,10 @@ def test_upgrade_080_to_082(tmp_path: Path, monkeypatch):
     assert (root / 'web-dist' / 'index.html').read_text() == 'page 0.8.2'
     assert json.loads((root / 'bin' / 'resource.json').read_text())['versions']['jar_ver'] == '0.8.2'
 
-    # settings.json, not picked, is kept as installed
-    assert (root / 'WEB-INF' / 'settings.json').read_text() == settings_080
+    # settings.json, not picked, is kept as installed, but sdocSphinx, the sphinx-build of this environment
+    settings = json.loads((root / 'WEB-INF' / 'settings.json').read_text())
+    assert settings.pop('sdocSphinx') == commands.sphinx_of_installer(None)
+    assert settings == {k: v for k, v in json.loads(settings_080).items() if k != 'sdocSphinx'}
 
     html = json.loads((root / 'WEB-INF' / 'html-service.json').read_text())
     # the user's value, picked

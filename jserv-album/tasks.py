@@ -39,7 +39,7 @@ if 'install-maven-local' not in _tasks and not _independent:
 
 from semanticshare.io.oz.invoke import SynodeTask
 from semanticshare.io.oz.syn.pkgresource import PkgResources
-from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
+from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings, web_dist as pkg_web_dist, sdoc_template_root
 
 from anson.io.odysz.common import LangExt, Utils
 from anson.io.odysz.utils import gzip2
@@ -437,7 +437,7 @@ def build(c: Context, deploy: str = 'tasks.json'):
 
     absdeploy = Path(deploy).absolute()
     web_root = taskcfg.git_prj('album-web')
-    web_dist = Path(web_root) / 'web-dist'
+    web_dist = Path(web_root) / pkg_web_dist
     desktop = taskcfg.git_prj('album-desktop')
     wsagent = taskcfg.git_prj('album-wsagent')
     synode_py = taskcfg.git_prj('synode.py')
@@ -494,7 +494,7 @@ def build(c: Context, deploy: str = 'tasks.json'):
         ['.', cmd_cp_wsagent_jar], # issue: gitprjs['album-wsagent'] cannot be undstand by slint/tasks.py
 
         # apk
-        ['.', f'rm -f web-dist/res-vol/portfolio-*.apk'],
+        ['.', f'rm -f {pkg_web_dist}/res-vol/portfolio-*.apk'],
         # JAVA_HOME is set in validate()
         [taskcfg.git_prj('album-android'), 'gradlew.bat assembleRelease' if os.name == 'nt' else './gradlew assembleRelease'],
 
@@ -608,6 +608,20 @@ def package(c: Context, deploy: str = 'tasks.json'):
             f.write('\n')
         return resource_src
 
+    # the doc template packed, see AppSettings.sdocTemplateRoot, sdocTemplateId
+    sdoc_template_src = os.path.join('src', 'main', 'webapp', 'sdoc-template-0.8')
+
+    def sdoc_template_id() -> str:
+        """
+        :return: the id of the template, its manifest.json's "id" (written by semantic-doc/src/make-template.py)
+        """
+        import json
+        with open(os.path.join(sdoc_template_src, 'manifest.json'), encoding='utf-8') as f:
+            tid = json.load(f).get('id')
+        if not tid:
+            raise ValueError(f'{sdoc_template_src}/manifest.json has no "id". Run semantic-doc/src/make-template.py on it.')
+        return tid
+
     resource_src = os.path.join('src', 'main', 'resource.json')
     resource_json = gen_resource_json()
     manifest = PkgResources.load(resource_json)
@@ -624,10 +638,10 @@ def package(c: Context, deploy: str = 'tasks.json'):
         'winsrv': f'{synode_py}/winsrv/*',
         "res": f"{synode_py}/src/synodepy3/res/*",
 
-        'web-dist': f'{taskcfg.git_prj("album-web")}/web-dist/*',
+        pkg_web_dist: f'{taskcfg.git_prj("album-web")}/{pkg_web_dist}/*',
 
-        # sdoc-template made by semantic-doc/src/make-template.py
-        'web-dist/sdoc-template': 'src/main/webapp/sdoc-template-0.8/*',
+        # the doc template made by semantic-doc/src/make-template.py, in its folder named by its id
+        f'{sdoc_template_root}/{sdoc_template_id()}': f'{sdoc_template_src}/*',
 
         'README.md': readme_md,
     }

@@ -7,5 +7,6 @@
     "resource": "web-dist",
     "allowDir": false
   }],
-  "startHandler": null
+  "startHandler": null,
+  "notfound": "/404.html"
 }

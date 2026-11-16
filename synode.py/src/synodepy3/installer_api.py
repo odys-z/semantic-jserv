@@ -32,7 +32,7 @@ from semanticshare.io.odysz.semantic.jserv.crud import SsException
 from semanticshare.io.oz.syntier.serv import ExternalHosts
 from semanticshare.io.oz.jserv.docs.syn.singleton import PortfolioException,\
     AppSettings, implISettingsLoaded, \
-    sys_db, syn_db, syntity_json, getJservUrl, valid_url_port
+    sys_db, syn_db, syntity_json, getJservUrl, valid_url_port, web_dist
 from semanticshare.io.oz.syn.registry import AnRegistry, SynodeConfig, RegistReq, \
     Centralport, RegistResp, SynOrg, CynodeStats
 
@@ -43,6 +43,7 @@ from semanticshare.io.oz.syn.pkgresource import PkgResources
 from .__version__ import jar_ver, web_ver, html_srver, ipcagent_ver
 
 from . import jre_mirror_key
+from .sdoc import sphinx_of_installer, build_pages
 from .prerequisites import check_exiftool, checkinstall_exiftool, exiftool_exe, exiftool_missing_msg
 from .validators import check_domain_id
 
@@ -364,7 +365,7 @@ install_uri = 'Anson.py3/test'
 host_private = 'private'
 web_host_json = f'{host_private}/host.json'
 
-album_web_dist = 'web-dist'
+album_web_dist = web_dist
 index_html = 'index.html'
 
 dictionary_json = 'dictionary.json'
@@ -1148,6 +1149,9 @@ class InstallerCli:
         myjserv = JServUrl(iport=iport_str, jprotocol=JProtocol(jserv_album))
         self.settings.Jservs({self.registry.config.synid: myjserv.jserv()})
 
+        # ISSUE sdoc-sphinx-venv: the Sphinx of this environment builds the docs' html
+        self.settings.sdocSphinx = sphinx_of_installer(self.settings.sdocSphinx)
+
         self.settings.save(cfgpaths.web_settings)
 
         sysdb, syndb, syntityjson = InstallerCli.sys_syn_db_syntity(self.settings.Volume())
@@ -1155,6 +1159,11 @@ class InstallerCli:
         # web/host.json
         InstallerCli.update_private(self.registry.config, self.settings)
         InstallerCli.update_htmlsrv(self.registry.config, self.settings)
+
+        # html-service's status and 404 pages, also the check of Sphinx (ISSUE sdoc-sphinx-venv)
+        why = build_pages(self.settings, cfg.synid, jar_ver)
+        if why:
+            print(f'Warning: docs can not be built to html, nor published: {why}', file=sys.stderr)
 
         if not Path.exists(Path(self.settings.Volume())):
             os.mkdir(self.settings.Volume())

@@ -1,5 +1,6 @@
 {
   "comment": "Written by semantic-doc/src/make-template.py; paths are relative to source/.",
+  "id": "rtd-0.8",
   "source": "source/",
   "files": [
     "conf.py",

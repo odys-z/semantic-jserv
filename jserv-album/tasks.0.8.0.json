@@ -11,7 +11,7 @@
   "jre_name"     : "x64_windows",
   "java_home"    : "$JAVA_HOME",
   "host_json"    : "host.json",
-  "download_root": "http://10.10.1.1:1984/portfolio-0.7",
+  "download_root": "http://10.10.1.1:1984/portfolio-0.8 deprecated, use github_release",
   "vol_files"    : {"volume": ["jserv-main.db", "doc-jserv.db"]},
   "vol_resource" : {"volume": "volume/*"},
   "registry_dir" : "../synode.py/registry",

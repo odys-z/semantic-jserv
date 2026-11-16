@@ -5,6 +5,7 @@ synode's upgrade still refuses a sandbox, and a sandbox refresh refuses a real s
 
 Linux only (the package is a .tar.gz). Run in synode.py:  pytest test/test_sandbox_refresh.py
 '''
+import json
 import os
 import shutil
 import sys
@@ -93,8 +94,12 @@ def test_sandbox_refresh(tmp_path: Path, monkeypatch):
     # the package's files, e.g. the semantics
     assert (root / 'WEB-INF' / 'semantics-doctree.xml').read_text() == fresh
     assert (root / 'web-dist' / 'index.html').read_text() == 'new page'
-    # the sandbox's own files: settings.json (sandbox kept), html-service.json, host.json, dbs
-    assert (root / 'WEB-INF' / 'settings.json').read_text() == settings0
+    # the sandbox's own files: settings.json (sandbox kept; sdocSphinx, a value the upgrade computes,
+    # ISSUE sdoc-sphinx-venv), html-service.json, host.json, dbs
+    settings = json.loads((root / 'WEB-INF' / 'settings.json').read_text())
+    settings0 = json.loads(settings0)
+    settings0['sdocSphinx'] = settings['sdocSphinx']
+    assert settings == settings0
     assert (root / 'WEB-INF' / 'html-service.json').read_text() == '{"local": true}'
     assert (root / 'web-dist' / 'private' / 'host.json').read_text() == '{"local": "host"}'
     for db in (sys_db, syn_db, doctree_db):

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -248,6 +249,58 @@ public class AppSettings extends Anson {
 
 	/** web page port */
 	public int webport = 8900;
+
+	/**
+	 * The web pages' folder in an installation, relative to the installation folder (the working folder).
+	 * html-service.json's paths can't refer it, and have it as is.
+	 * Python: semanticshare.io.oz.jserv.docs.syn.singleton.web_dist.
+	 * @since 0.8.2
+	 */
+	public static final String web_dist = "web-dist";
+
+	/** Default of {@link #sdocTemplateRoot}, Python: singleton.sdoc_template_root. @since 0.8.2 */
+	public static final String sdoc_template_root = web_dist + "/sdoc-template";
+
+	/**
+	 * The folder of semantic-doc's Sphinx templates, one folder per template id, &lt;root&gt;/&lt;id&gt;/
+	 * (manifest.json, source/, _static/), relative to the installation folder, or absolute.
+	 * @since 0.8.2
+	 */
+	public String sdocTemplateRoot = sdoc_template_root;
+
+	/**
+	 * The template semantic-doc's html is built with, a folder name in {@link #sdocTemplateRoot}.
+	 * @since 0.8.2
+	 */
+	public String sdocTemplateId = "rtd-0.8";
+
+	/**
+	 * The Sphinx command semantic-doc's html is built with: the sphinx-build of the installer's venv,
+	 * e.g. &lt;venv&gt;/bin/sphinx-build, written by synode.py when installing and upgrading; or Windows'
+	 * packed one. Default: sphinx-build, found in PATH. ISSUE sdoc-sphinx-venv
+	 * @since 0.8.2
+	 */
+	public String sdocSphinx = "sphinx-build";
+
+	/**
+	 * The Sphinx source folder of the template html is built with: &lt;sdocTemplateRoot&gt;/&lt;sdocTemplateId&gt;/source,
+	 * or, if it's not there, of the first template found in sdocTemplateRoot.
+	 * @return the folder, absolute; null if there is no template
+	 * @since 0.8.2
+	 */
+	public String sdocTemplateSource() {
+		File root = new File(isblank(sdocTemplateRoot) ? sdoc_template_root : sdocTemplateRoot).getAbsoluteFile();
+		File src = new File(new File(root, ifnull(sdocTemplateId, "")), "source");
+		if (!isblank(sdocTemplateId) && new File(src, "conf.py").isFile())
+			return src.getAbsolutePath();
+
+		File[] ids = root.listFiles((f) -> new File(new File(f, "source"), "conf.py").isFile());
+		if (ids == null || ids.length == 0)
+			return null;
+		Arrays.sort(ids);
+		warn("The doc template %s is not in %s, using %s.", sdocTemplateId, root, ids[0].getName());
+		return new File(ids[0], "source").getAbsolutePath();
+	}
 
 	/**
 	 * Synode port exposed through a proxy.
