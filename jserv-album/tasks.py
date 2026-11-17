@@ -294,7 +294,7 @@ def install_maven_local(c: Context, deploy: str='tasks.closed-test.json', gpg: s
 
     print('----------  Install Local Maven ---------')
     for pth in pom_locations:
-        mvn = f'mvn clean compile package install -Dgpg.passphrase={gpg} -DskipTests'
+        mvn = f'mvn clean install -Dgpg.passphrase={gpg} -DskipTests'
         print('****************************************************************************')
         print('*', pth, ":", mvn)
         print('****************************************************************************')
