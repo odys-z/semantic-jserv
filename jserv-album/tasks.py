@@ -15,8 +15,8 @@ _independent = bool(_tasks & {'github-head', 'gh-release'})
 
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
-    requir_pkg("anson.py3", "0.6.12")
-    requir_pkg("semantics.py3", "0.6.20") # SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load()
+    requir_pkg("anson.py3", "0.6.13") # gzip2() excludes by the paths in the package
+    requir_pkg("semantics.py3", "0.6.21") # WebAssets, WebConfig.startHandlers; SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load()
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("anclient.py3", "0.2.8")
@@ -39,6 +39,7 @@ if 'install-maven-local' not in _tasks and not _independent:
 
 from semanticshare.io.oz.invoke import SynodeTask
 from semanticshare.io.oz.syn.pkgresource import PkgResources
+from semanticshare.io.oz.srv import WebAssets
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings, web_dist as pkg_web_dist, sdoc_template_root
 
 from anson.io.odysz.common import LangExt, Utils
@@ -441,6 +442,8 @@ def build(c: Context, deploy: str = 'tasks.json'):
     desktop = taskcfg.git_prj('album-desktop')
     wsagent = taskcfg.git_prj('album-wsagent')
     synode_py = taskcfg.git_prj('synode.py')
+    # semantic-doc/src, the doc-tree editor's source, beside doctree.jserv
+    sdoc_src = os.path.normpath(os.path.join(taskcfg.git_prj('doctree.jserv'), '..', 'src'))
 
     def cmd_build_synodepy3() -> str:
         """
@@ -503,6 +506,11 @@ def build(c: Context, deploy: str = 'tasks.json'):
 
         # both builds of album-web (webpack.config.js): [name].min.js, [name].prod.min.js, with .gz and .map
         [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* vendor-*.min.js* doctree*.min.js* report.html'],
+        # album-web bundles semantic-doc (the doc-tree editor) from the tarball installed in its node_modules,
+        # not from the source: pack the source and install the tarball again (album-web's package.json,
+        # install-sdoc), or the editor of the last install is what's bundled, e.g. without a new button.
+        [sdoc_src, 'npm run pack'],
+        [web_root, 'npm run install-sdoc'],
         [web_root, 'webpack'],
 
         [web_dist, updateApkRes],
@@ -661,7 +669,24 @@ def package(c: Context, deploy: str = 'tasks.json'):
     else:
         print("[*** TODO *** 0.8.0 POSIX]  desktop [album-gui, ws-agent.jar, settings], requires exiftool, jre-posix")
 
-    excludes = ['*.log', 'report.html', '*.github.json', '.gitignore']
+    def gz_only() -> list[str]:
+        """
+        The files of album-web packed as their .gz only: the files its webpack builds emit, each with
+        a .gz emitted too, by the builds' list, web-dist/webpack-assets.json (webpack.config.js,
+        AssetsListPlugin; semanticshare WebAssets). The list is packed with them: html-service unzips
+        the files when it starts (io.oz.srv.WebAssetsHandler, of html-service.json's startHandlers),
+        so they are not packed twice.
+        :return: the files' paths in the package, e.g. web-dist/portfolio.min.js, web-dist/fonts/a.ttf,
+                 excluded by gzip2() as paths (anson.py3 0.6.13), not as file names of any resource;
+                 empty if there's no list (everything is packed, as before)
+        """
+        lst = os.path.join(taskcfg.git_prj('album-web'), pkg_web_dist, WebAssets.json)
+        if not os.path.isfile(lst):
+            Utils.warn(f'[WARNING] {lst} is not found: album-web is packed with both the files and their .gz.')
+            return []
+        return cast(WebAssets, Anson.from_file(lst)).gz_only(pkg_web_dist)
+
+    excludes = ['*.log', 'report.html', '*.github.json', '.gitignore', *gz_only()]
 
     try:
         print('------------ package resources --------------')
