@@ -35,7 +35,7 @@ from semanticshare.io.oz.syn import SynodeMode, Synode
 
 from synodepy3.winsrv import install_winsrvs, winsrvs_installed
 from synodepy3.installer_api import InstallerCli, serv_port0, web_port0, err_uihandlers, \
-    synode_ui, cfgpaths, posix_path, desktop_exe, start_desktop, readable_state, state_mark
+    synode_ui, cfgpaths, posix_path, desktop_exe, start_desktop, create_desktop_shortcut, readable_state, state_mark
 from synodepy3.install_jre import validate_jre
 from synodepy3.jre_downloader import _event_loop_interval_
 
@@ -514,7 +514,20 @@ class InstallerForm(QMainWindow):
                 'Restart the computer if the service starting failed due to binding ports, by which you started tests early.')
 
         self.enable_widgets()
+        self.shortcut_desktop()
         self.ask_start_desktop()
+
+    def shortcut_desktop(self):
+        '''
+        Services are installed: create the synode's Start Menu shortcuts, the desktop app and setup-gui
+        (desktop/create-shortcut.bat, if the desktop is packaged).
+        '''
+        if desktop_exe() is None:
+            return
+        try:
+            print(create_desktop_shortcut(self.cli.registry.config.synid))
+        except OSError as e:
+            err_msg('Creating the Start Menu shortcuts failed. Create them later with desktop/create-shortcut.bat.', e)
 
     def ask_start_desktop(self):
         '''

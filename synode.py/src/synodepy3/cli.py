@@ -5,7 +5,22 @@ from anson.io.odysz.common import Utils
 from .commands import update_srv
 from .winsrv import uninstall_wsrv_byname, winsrv_synode, winsrv_websrv
 # See https://stackoverflow.com/a/28154841
-from .installer_api import InstallerCli, posix_path
+from .installer_api import InstallerCli, posix_path, remove_desktop_shortcut
+
+
+def remove_shortcuts(cli: InstallerCli):
+    """
+    Remove the synode's shortcuts (desktop/remove-shortcut.bat/.sh, if the desktop is packaged),
+    the desktop app's and setup's, which create_desktop_shortcut() created while installing.
+    """
+    try:
+        out = remove_desktop_shortcut(cli.registry.config.synid)
+        if out:
+            print(out)
+    except OSError as e:
+        print(f'Removing the shortcuts failed: {e}\n'
+              f'Remove them later with desktop/remove-shortcut.{"bat" if Utils.iswindows() else "sh"}.',
+              file=sys.stderr)
 
 
 def uninst_srv():
@@ -29,6 +44,7 @@ def uninst_srv():
                   'remove them from /etc/systemd/system/ and run sudo systemctl daemon-reload.')
         for u, st in states.items():
             print(f'{u}: {st}')
+        remove_shortcuts(cli)
         return
 
     if winsrv_websrv not in cli.settings.envars:
@@ -48,6 +64,8 @@ def uninst_srv():
         uninstall_wsrv_byname(srvname)
     except invoke.exceptions.UnexpectedExit as e:
         print(f"Error uninstalling html-service: {e}", file=sys.stderr)
+
+    remove_shortcuts(cli)
 
 
 def upgrade_srv(zip_path: str = None):

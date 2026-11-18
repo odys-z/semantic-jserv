@@ -19,6 +19,7 @@ import shutil
 import socket
 import subprocess
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import List, cast, Optional, Callable, Final, Iterable, Tuple
 
@@ -168,6 +169,28 @@ def desktop_running(folder: str = '.') -> bool:
         return True
 
 
+@contextmanager
+def _no_frozen_dlldir():
+    """
+    Windows: a frozen setup-* (PyInstaller) may have set the DLL directory to its _internal/, which
+    child processes inherit - the desktop (or a script) must load its own Qt / runtime DLLs, not
+    setup-gui's PySide6 ones. Clear it while starting a child, then restore it.
+    """
+    if not Utils.iswindows():
+        yield
+        return
+    import ctypes
+    k32 = ctypes.windll.kernel32
+    buf = ctypes.create_unicode_buffer(32768)
+    dlldir = k32.GetDllDirectoryW(len(buf), buf)
+    k32.SetDllDirectoryW(None)
+    try:
+        yield
+    finally:
+        if dlldir:
+            k32.SetDllDirectoryW(buf.value)
+
+
 def start_desktop(folder: str = '.') -> Optional[subprocess.Popen]:
     """
     Start the desktop app, detached from setup-*, in its own folder, <folder>/desktop.
@@ -183,19 +206,60 @@ def start_desktop(folder: str = '.') -> Optional[subprocess.Popen]:
         return subprocess.Popen([str(exe)], cwd=exe.parent, start_new_session=True,
                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    # A frozen setup-* (PyInstaller) may have set the DLL directory to its _internal/, which the child
-    # inherits - the desktop must load its own Qt / runtime DLLs, not setup-gui's PySide6 ones.
-    import ctypes
-    k32 = ctypes.windll.kernel32
-    buf = ctypes.create_unicode_buffer(32768)
-    dlldir = k32.GetDllDirectoryW(len(buf), buf)
-    k32.SetDllDirectoryW(None)
-    try:
+    with _no_frozen_dlldir():
         return subprocess.Popen([str(exe)], cwd=exe.parent, close_fds=True,
                                 creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
-    finally:
-        if dlldir:
-            k32.SetDllDirectoryW(buf.value)
+
+
+def _desktop_shortcut(script: str, synid: str, folder: str) -> Optional[str]:
+    """
+    Run <folder>/desktop/<script>.bat (.sh), generated with the desktop (Anclient/examples/example.slint,
+    tasks.py shallow-pack, from app/setup/*.templ), for the synode synid: the environment variables
+    PORTFOLIO_SYNODE and PORTFOLIO_VENV (the venv setup-cli runs in, if any) carry the arguments,
+    which keeps a CJK synode id or path intact from here, through cmd, to PowerShell.
+    :return: None if the desktop is not packaged; otherwise the script's output.
+    :raise OSError: if the script is missing or fails.
+    """
+    exe = desktop_exe(folder)
+    if exe is None:
+        return None
+    pth = exe.absolute().parent / (script + ('.bat' if Utils.iswindows() else '.sh'))
+    if not pth.is_file():
+        raise OSError(f'The shortcut script is not packaged: {pth}')
+
+    env = dict(os.environ, PORTFOLIO_SYNODE=synid)
+    env.pop('PORTFOLIO_VENV', None)
+    if sys.prefix != sys.base_prefix:
+        env['PORTFOLIO_VENV'] = sys.prefix
+
+    cmd = ['cmd', '/c', str(pth), '/q'] if Utils.iswindows() else ['sh', str(pth)]
+    with _no_frozen_dlldir():
+        p = subprocess.run(cmd, cwd=pth.parent, env=env, stdin=subprocess.DEVNULL, capture_output=True,
+                           creationflags=subprocess.CREATE_NO_WINDOW if Utils.iswindows() else 0)
+    out = (p.stdout + p.stderr).decode('utf-8', errors='replace').lstrip('\ufeff').strip()
+    if p.returncode != 0:
+        raise OSError(f'{pth.name} failed ({p.returncode}): {out}')
+    return out
+
+
+def create_desktop_shortcut(synid: str, folder: str = '.') -> Optional[str]:
+    """
+    Create the synode's shortcuts, the desktop app (starting in <folder>/desktop) and setup-gui
+    (starting in <folder>): Windows, Start Menu/Programs/<root>/<synid>/; Linux, the applications menu's
+    "<desktop> (<synid>)" and "<setup> (<synid>)", the latter running ./synode-cli in a terminal.
+    :return: None if the desktop is not packaged; otherwise the script's report.
+    :raise OSError: if it fails.
+    """
+    return _desktop_shortcut('create-shortcut', synid, folder)
+
+
+def remove_desktop_shortcut(synid: str, folder: str = '.') -> Optional[str]:
+    """
+    Remove the synode's shortcuts create_desktop_shortcut() created, found by their targets.
+    :return: None if the desktop is not packaged; otherwise the script's report.
+    :raise OSError: if it fails.
+    """
+    return _desktop_shortcut('remove-shortcut', synid, folder)
 
 
 def promote_upgrade_whl(folder: str = '.') -> bool:

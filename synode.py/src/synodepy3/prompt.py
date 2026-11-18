@@ -19,7 +19,7 @@ from synodepy3.winsrv import install_winsrvs, winsrvs_installed
 from synodepy3.linunits import install_linusrvs, linusrv_synode, linusrv_websrv, generate_service_templ, \
     linusrvs_installed
 from synodepy3.installer_api import InstallerCli, jserv_07_jar, html_web_jar, web_port0, serv_port0, err_uihandlers, mypath, posix_path, \
-    desktop_exe, start_desktop, readable_state, available_state
+    desktop_exe, start_desktop, create_desktop_shortcut, readable_state, available_state
 from synodepy3.validators import PJservValidator, PIPValidator, PDomainValidator, domain_maxlen
 from synodepy3.prerequisites import check_prerequisites
 from synodepy3.get_avail_ports import report_port_ranges
@@ -54,6 +54,20 @@ if any(a in ('-h', '--help', 'help') for a in sys.argv[1:]):
 
 _quit = False
 details = [cast(Optional[str], None)]
+
+def shortcut_desktop(synid: str):
+    """
+    Services are installed: create the synode's shortcuts, the desktop app and the setup
+    (desktop/create-shortcut.bat/.sh, if the desktop is packaged).
+    """
+    try:
+        out = create_desktop_shortcut(synid)
+        if out:
+            print(out)
+    except OSError as e:
+        Utils.warn(f'Creating the shortcuts failed: {e}\n'
+                   f'Create them later with desktop/create-shortcut.{"bat" if Utils.iswindows() else "sh"}.')
+
 
 def quit_or_start_desktop(session: PromptSession, tip: str):
     """
@@ -687,6 +701,7 @@ if caninstall == 1:
 
         report = '\n'.join(f'{s}: {"installed" if ok else "NOT installed"}' for s, ok in states.items())
         if states and all(states.values()):
+            shortcut_desktop(cfg.synid)
             quit_or_start_desktop(session,
                 report + '\n\n' +
                 'Check the services in Windows Service Control (services.msc), or logs in current folder.\n\n' +
@@ -731,6 +746,7 @@ if caninstall == 1:
                 Utils.warn(e)
 
         if states:
+            shortcut_desktop(cfg.synid)
             session.prompt(message=
                 '\n'.join(f'{u}: {st}' for u, st in states.items()) + '\n\n' +
                 'Check logs with:\n' +
