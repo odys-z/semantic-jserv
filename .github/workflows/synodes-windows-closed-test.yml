@@ -8,7 +8,8 @@
 # 4. Configures each node with setup-cli.exe, fed by .github/closed-test/answers/windows/<node>.txt
 #    through a pseudo console (feed_answers.py --console). setup-cli.exe installs the Windows
 #    services itself; the runner is elevated, so there is no UAC request. The hub creates the domain
-#    CENTRAL_DOMAIN (ci-0.8); the peers join it.
+#    CENTRAL_DOMAIN (ci-0.8); the peers join it. Then checks the desktop's settings are the node's,
+#    and the Start Menu shortcuts setup-cli.exe made (desktop/create-shortcut.bat; packages since it).
 # 5. Reports the central's domain tables, and checks the new domain's synodes (hub h, peers p) and
 #    that the other domains are unchanged.
 # 6. Builds the Java client from source (semantic.jserv and jserv-album-lib of this branch,

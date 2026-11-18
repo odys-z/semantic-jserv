@@ -70,6 +70,9 @@ setup_node() {
   [ -f $WORK/$1/jre17/bin/java.exe ] || { echo "::error::$1: setup did not finish, see $1-cli.log"; return 1; }
   python $CONFIG/closed_test.py installed $WORK/$1 $CENTRAL_DOMAIN $3 || return 1
   check_services $1 $2 || { echo "::error::$1: see $1-cli.log, winsrv-install.log"; return 1; }
+  # the desktop's settings are the node's, and the Start Menu shortcuts (packages since them)
+  python $CONFIG/closed_test.py desktop $WORK/$1 $3 || { echo "::error::$1: see $1-cli.log"; return 1; }
+  python $CONFIG/closed_test.py shortcuts $WORK/$1 $3 || { echo "::error::$1: see $1-cli.log"; return 1; }
   if [ -n "$pkg" ]; then
     [ -f $WORK/$1/upgrade.exe ] && [ ! -e $WORK/$1/upgrade.pkg ] || {
       echo "::error::$1: setup-cli.exe didn't move upgrade.pkg to upgrade.exe, see $1-cli.log"; return 1; }
@@ -109,8 +112,11 @@ refuse_node() {
 #   and restarts the services; if the new bin/resource.json has other versions, it reinstalls them first,
 #   with the new names (settings.json envars) and jars (winsrv/*.bat). upgrade_cli.py ends with
 #   input('Press Enter to quit ...'), which keeps a double-clicked console open: answered by the echo.
+#   Then the desktop's settings: the node's values kept, wsagent_jar the new package's (bin/resource.json
+#   config_picks), and the Start Menu shortcuts; checked if the installed upgrade.exe does it (its log
+#   tells), or the installed package made the shortcuts, else a notice.
 upgrade_node() {
-  local before after
+  local before after deskbefore shortcuts=
   check_central || return 1
   before=$(services $1)
   [ -f $WORK/$1/upgrade.exe ] || {
@@ -119,6 +125,10 @@ upgrade_node() {
   [ -f $WORK/$1/bin/resource.json ] || {
     echo "::error::$1: the installed package has no bin/resource.json: its upgrade.exe predates the manifest. Install a package built since (release_tag)."
     return 1; }
+  deskbefore=$WORK/logs/$1-app-settings-before.json
+  rm -f $deskbefore
+  [ -f $WORK/$1/desktop/settings/app-settings.json ] && cp $WORK/$1/desktop/settings/app-settings.json $deskbefore
+  [ -f $WORK/$1/desktop/create-shortcut.bat ] && shortcuts=1
   ( cd $WORK/$1 && echo | ./upgrade.exe "$4" ) 2>&1 | tee $WORK/logs/$1-upgrade.log
   grep -q 'Update complete' $WORK/logs/$1-upgrade.log || {
     echo "::error::$1: upgrade.exe did not complete, see $1-upgrade.log"; return 1; }
@@ -136,4 +146,18 @@ upgrade_node() {
   done
   check_services $1 $2 || return 1
   sc.exe qc "${after%% *}" > $WORK/logs/$1-service-after-upgrade.txt || true
+
+  if [ -f $deskbefore ]; then
+    if grep -q 'app-settings\.json' $WORK/logs/$1-upgrade.log; then
+      python $CONFIG/closed_test.py desktop $WORK/$1 $3 $deskbefore || { echo "::error::$1: see $1-upgrade.log"; return 1; }
+    else
+      echo "::notice::$1: the installed upgrade.exe predates keeping the desktop settings (synodepy3 update_srv() step 2), not checked"
+    fi
+  fi
+  grep -q 'Shortcut created:' $WORK/logs/$1-upgrade.log && shortcuts=1
+  if [ -n "$shortcuts" ]; then
+    python $CONFIG/closed_test.py shortcuts $WORK/$1 $3 || { echo "::error::$1: see $1-upgrade.log"; return 1; }
+  else
+    echo "::notice::$1: neither the installed package nor its upgrade.exe makes the shortcuts, not checked"
+  fi
 }

@@ -22,7 +22,7 @@ from .__version__ import jar_ver, synode_ver
 
 from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_res, \
     resource_json, InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
-    html_service_json, desktop_exe, desktop_running
+    html_service_json, desktop_exe, desktop_running, desktop_dir, create_desktop_shortcut
 from .sdoc import sphinx_of_installer, build_pages
 from .linunits import Sudo, stop_sysunits, restart_sysunits, apply_unit_resources
 from .winsrv import stop_winsrvs, restart_wsrvs, apply_winsrv_resources
@@ -94,8 +94,9 @@ def update_srv(pkg_path: str, sandbox: bool = False):
          (installer_api.desktop_running())
       1. stop the 2 services saved in settings.json (Windows services, or Linux systemd units,
          which stay installed); nothing is upgraded if they can't be stopped
-      2. back up vol/dictionary.json, vol/*.db (incl. doctree.db), WEB-INF/settings.json, WEB-INF/html-service.json
-         and web-dist/private/host.json into a dated backup-YYYYMMDD/ folder,
+      2. back up vol/dictionary.json, vol/*.db (incl. doctree.db), WEB-INF/settings.json, WEB-INF/html-service.json,
+         web-dist/private/host.json and, if the desktop is packaged, desktop/settings/app-settings.json
+         (the installer's values, InstallerCli.update_clients()) into a dated backup-YYYYMMDD/ folder,
          preserving each file's exact relative sub-path
          (vol = WEB-INF/settings.json's "volume")
          Also kept there, as a reference only (not restored): bin/resource.json, the installed
@@ -119,6 +120,9 @@ def update_srv(pkg_path: str, sandbox: bool = False):
       6. Linux: install the new package's bin/synode_py3-*.whl, the upgrade tool itself, so that the
          next upgrade runs the new version (installer_api.promote_upgrade_whl()). Windows: the new
          upgrade.exe is unpacked as upgrade.pkg, beside the running upgrade.exe, and moved by setup-*.
+      7. if the desktop is packaged, create (or refresh) the synode's shortcuts with the new package's
+         desktop/create-shortcut script, so that a synode installed before the shortcuts gets them
+         (installer_api.create_desktop_shortcut()); a failure only warns.
       No step asks the user. Linux: sudo asks for a password only if it needs one; Windows: installing
       services needs the administrator, asked once (UAC) unless upgrade.exe runs as one.
 
@@ -228,6 +232,11 @@ def update_srv(pkg_path: str, sandbox: bool = False):
     stash(web_inf, settings_json)
     stash(web_inf, html_service_json)
     stash(album_web_dist, web_host_json)
+    # the desktop's settings, the installer's values: the new package's app-settings.json picks them
+    # (resource.json config_picks), and keeps its own wsagent_jar, the new IPC agent's
+    desk_settings = os.path.join(desktop_dir, 'settings')
+    if desktop_exe() is not None:
+        stash(desk_settings, 'app-settings.json')
 
     # the installed package's manifest: a reference, not restored (the new package's one replaces it)
     old_res = installed
@@ -325,9 +334,17 @@ def update_srv(pkg_path: str, sandbox: bool = False):
         for u, st in restart_sysunits(cast(Sudo, sudo), units, ask=False).items():
             print(f'{u}: {st}')
 
-    # 6. the upgrade tool itself (Linux), last: the running process keeps the modules it has loaded
+    # 6. the upgrade tool itself (Linux): the running process keeps the modules it has loaded
     if unpacked and not Utils.iswindows():
         promote_upgrade_whl()
+
+    # 7. the synode's shortcuts, with the new package's script (an installation before them gets them)
+    if unpacked and desktop_exe() is not None:
+        try:
+            print(create_desktop_shortcut(synode_id(cli)))
+        except OSError as e:
+            print(f'Warning: {e}\nCreate the shortcuts later with desktop/create-shortcut.'
+                  f'{"bat" if Utils.iswindows() else "sh"}.', file=sys.stderr)
 
     ok = unpacked and restored and applied
     print(f'Update {"complete" if ok else "FAILED"}. Backup kept at: {os.path.abspath(backup_dir)}')

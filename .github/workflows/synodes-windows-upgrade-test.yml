@@ -16,7 +16,9 @@
 #      restart the services, reinstalled first with new names and jars if the new bin/resource.json
 #      has other versions), and checks: "Update complete", every backed-up file restored, the node is
 #      still the same domain / synode, its services are named after the new versions and the bats
-#      have the new jars, the old services are gone if renamed, the jserv is up again.
+#      have the new jars, the old services are gone if renamed, the jserv is up again; the desktop's
+#      settings keep the node's values with the new IPC agent jar (bin/resource.json config_picks),
+#      and the Start Menu shortcuts are there (if the installed upgrade.exe or package does them).
 # 9.   The central's domain tables again (ci-0.8 hub h, peers p; other domains unchanged), photo 1
 #      still on every node, and photo 2 pushed and synchronized after the upgrade.
 #

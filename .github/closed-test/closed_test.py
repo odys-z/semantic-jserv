@@ -14,6 +14,8 @@ Used by the synodes-{windows,linux}-{closed,upgrade}-test.yml workflows.
     python closed_test.py upgraded     <node> <upgrade-log>
     python closed_test.py resources-applied <node>
     python closed_test.py packed-bats  <node>
+    python closed_test.py desktop      <node> <synid> [<app-settings.json before the upgrade>]
+    python closed_test.py shortcuts    <node> <synid>
     python closed_test.py repack       <package> <out-package> <json>
 
 repack: a copy of a package whose bin/resource.json is updated with <json> (top-level keys replaced),
@@ -28,6 +30,15 @@ upgrade-tool: the installed synode_py3 is the version of the package's bin/synod
 packed-bats: the package's winsrv/install-*.bat are stamped at build (jserv-album/tasks.py config,
 the BEGIN line's mark), with the jar versions of its bin/resource.json; Windows packages since installing
 stopped stamping them (synodepy3 winsrv.py), so a package built before fails here.
+
+desktop: the desktop's settings/app-settings.json is the node's (synode_id, synode_vol), and its
+wsagent_jar is there; after an upgrade (given the file before it), the installer's values are kept
+(bin/resource.json config_picks) and wsagent_jar is the new package's. Skipped without desktop/.
+
+shortcuts (Windows): Start Menu/Programs/<root>/<synid>/ has the shortcuts desktop/create-shortcut.bat
+made at install (synodepy3 create_desktop_shortcut()): the desktop's, starting in desktop/, and
+setup-gui's, starting in the node; <root> is the one the script was generated with. Skipped with a
+notice for packages before the shortcuts (no desktop/create-shortcut.bat).
 
 pick-release reads `gh api --paginate --slurp repos/<repo>/releases` and prints the newest matching
 asset as "<updated>\t<tag>\t<name>" (nothing if none). The release it is in must hold at most one asset
@@ -253,6 +264,9 @@ def upgraded(node, log):
     if any('is not the same as its backup' in l for l in lines):
         fail(f'{name}: a file is not restored, see {os.path.basename(log)}')
     restored = [l.split('Restored:', 1)[1].strip().replace('\\', '/') for l in lines if 'Restored:' in l]
+    # a file bin/resource.json picks (config_picks) is made of the new one, "<path>: the new version's, ..."
+    restored += [l.split(": the new version's", 1)[0].strip().replace('\\', '/')
+                 for l in lines if ": the new version's" in l]
     for p in backed:
         if not any(r.endswith('/' + os.path.basename(p)) or r == os.path.basename(p) for r in restored):
             fail(f'{name}: {p} is backed up but not restored, see {os.path.basename(log)}')
@@ -299,6 +313,87 @@ def resources_applied(node):
                 if f'@set jar_ver={ver}' not in f.read():
                     fail(f'{name}: winsrv/{bat} is not stamped with jar_ver={ver}')
         print(f"{name}: services {expect['winsrv.synode']}, {expect['winsrv.web']}")
+
+
+DESKTOP_PICKS = ('synode_id', 'synode_vol', 'synode_jserv', 'album_web', 'java_path', 'domain', 'domain_token',
+                 'admin', 'org', 'market_id', 'market_name', 'centralPswd', 'regiserv', 'device')
+'''
+The installer's values (and the device) of the desktop's settings, which an upgrade keeps:
+jserv-album/src/main/resource.json config_picks "desktop/settings/app-settings.json".
+'''
+
+
+def desktop(node, synid, before=None):
+    name = os.path.basename(node)
+    js = os.path.join(node, 'desktop', 'settings', 'app-settings.json')
+    if not os.path.isdir(os.path.join(node, 'desktop')):
+        print(f'::notice::{name}: no desktop/ in the package, its settings are not checked')
+        return
+    if not os.path.isfile(js):
+        fail(f'{name}: no desktop/settings/app-settings.json')
+    with open(js, encoding='utf-8') as f:
+        st = json.load(f)
+    if st.get('synode_id') != synid:
+        fail(f"{name}: desktop/settings/app-settings.json synode_id is {st.get('synode_id')!r}, expected {synid!r}")
+    if not st.get('synode_vol'):
+        fail(f'{name}: desktop/settings/app-settings.json has no synode_vol')
+    jar = st.get('wsagent_jar') or ''
+    if not jar or not os.path.isfile(os.path.join(node, 'desktop', jar)):
+        fail(f'{name}: desktop/settings/app-settings.json wsagent_jar {jar!r} is not in desktop/')
+
+    if before:
+        with open(before, encoding='utf-8') as f:
+            old = json.load(f)
+        changed = [k for k in DESKTOP_PICKS if k in old and old[k] is not None and st.get(k) != old[k]]
+        if changed:
+            fail(f'{name}: the upgrade did not keep the desktop settings: {", ".join(changed)}')
+        agents = sorted(os.path.basename(p) for p in glob.glob(os.path.join(node, 'desktop', 'res', 'ws-agent-*.jar')))
+        print(f"{name}: desktop settings kept; wsagent_jar {old.get('wsagent_jar')} -> {jar} (res/: {', '.join(agents)})")
+    else:
+        print(f'{name}: desktop settings of {synid}, wsagent_jar {jar}')
+
+
+def shortcuts(node, synid):
+    import subprocess
+    name = os.path.basename(node)
+    bat = os.path.join(node, 'desktop', 'create-shortcut.bat')
+    if not os.path.isfile(bat):
+        print(f'::notice::{name}: no desktop/create-shortcut.bat (a package before the shortcuts), not checked')
+        return
+    # the root the script was generated with: $root = '<name>', a PowerShell string ('' for ')
+    with open(bat, encoding='utf-8') as f:
+        m = re.search(r"^\$root\s*=\s*'((?:[^']|'')*)'", f.read(), re.M)
+    if m is None:
+        fail(f'{name}: no $root in desktop/create-shortcut.bat')
+    root = m.group(1).replace("''", "'")
+
+    ps = ("$ErrorActionPreference = 'Stop'; [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false; "
+          "$d = Join-Path (Join-Path ([Environment]::GetFolderPath('Programs')) $env:CT_ROOT) $env:CT_SYNID; "
+          "$w = New-Object -ComObject WScript.Shell; "
+          "@(Get-ChildItem -LiteralPath $d -Filter '*.lnk' | ForEach-Object { $s = $w.CreateShortcut($_.FullName); "
+          "@{lnk = $_.FullName; target = $s.TargetPath; workdir = $s.WorkingDirectory} }) | ConvertTo-Json -Compress")
+    folder = re.sub(r'[\\/:*?"<>|\x00-\x1f]', '_', synid).strip().rstrip('.')
+    r = subprocess.run(['powershell', '-NoProfile', '-Command', ps], capture_output=True,
+                       env=dict(os.environ, CT_ROOT=root, CT_SYNID=folder))
+    out = r.stdout.decode('utf-8', errors='replace').strip()
+    if r.returncode != 0 or not out:
+        fail(f"{name}: no shortcuts in Start Menu/Programs/{root}/{folder}: "
+             f"{r.stderr.decode('utf-8', errors='replace').strip()}")
+    links = json.loads(out)
+    links = links if isinstance(links, list) else [links]
+
+    def same(a, b):
+        return os.path.normcase(os.path.abspath(a or '')) == os.path.normcase(os.path.abspath(b))
+
+    want = {'desktop': (os.path.join(node, 'desktop', 'album_gui.exe'), os.path.join(node, 'desktop')),
+            'setup-gui': (os.path.join(node, 'setup-gui.exe'), node)}
+    for what, (target, workdir) in want.items():
+        lnk = [l for l in links if same(l.get('target'), target)]
+        if not lnk:
+            fail(f'{name}: no shortcut to {target} in Start Menu/Programs/{root}/{folder}: {links}')
+        if not same(lnk[0].get('workdir'), workdir):
+            fail(f"{name}: {lnk[0]['lnk']} starts in {lnk[0].get('workdir')!r}, expected {workdir!r}")
+        print(f"{name}: {lnk[0]['lnk']} -> {target}, starts in {workdir}")
 
 
 BUILD_MARK = 'stamped at build by jserv-album/tasks.py config'
@@ -420,6 +515,10 @@ def main():
         resources_applied(a[0])
     elif cmd == 'packed-bats':
         packed_bats(a[0])
+    elif cmd == 'desktop':
+        desktop(*a)
+    elif cmd == 'shortcuts':
+        shortcuts(*a)
     elif cmd == 'repack':
         repack(*a)
     elif cmd == 'upgrade-tool':
