@@ -24,27 +24,65 @@
   "// config_picks desktop/settings/app-settings.json": "the installer's values (synodepy3 InstallerCli.update_clients()) and the device, listed although the installer computes some, as on Windows the running upgrade.exe is the previous version; wsagent_jar is the new package's, the new IPC agent jar.",
   "config_picks": {
     "WEB-INF/html-service.json": {
-      "welcomepages": [ "welcomepages" ],
-      "dynaResource.pollInterval_snd": [ "dynaResource.pollInterval_snd" ],
-      "dynaResource.allowDir": [ "dynaResource.allowDir" ],
-      "dynaResource.resource": [ "dynaResource.resource" ],
-      "dynaResource.danyroot": [ "dynaResource.danyroot" ]
+      "welcomepages": [
+        "welcomepages"
+      ],
+      "dynaResource.pollInterval_snd": [
+        "dynaResource.pollInterval_snd"
+      ],
+      "dynaResource.allowDir": [
+        "dynaResource.allowDir"
+      ],
+      "dynaResource.resource": [
+        "dynaResource.resource"
+      ],
+      "dynaResource.danyroot": [
+        "dynaResource.danyroot"
+      ]
     },
     "desktop/settings/app-settings.json": {
-      "synode_id": [ "synode_id" ],
-      "synode_vol": [ "synode_vol" ],
-      "synode_jserv": [ "synode_jserv" ],
-      "album_web": [ "album_web" ],
-      "java_path": [ "java_path" ],
-      "domain": [ "domain" ],
-      "domain_token": [ "domain_token" ],
-      "admin": [ "admin" ],
-      "org": [ "org" ],
-      "market_id": [ "market_id" ],
-      "market_name": [ "market_name" ],
-      "centralPswd": [ "centralPswd" ],
-      "regiserv": [ "regiserv" ],
-      "device": [ "device" ]
+      "synode_id": [
+        "synode_id"
+      ],
+      "synode_vol": [
+        "synode_vol"
+      ],
+      "synode_jserv": [
+        "synode_jserv"
+      ],
+      "album_web": [
+        "album_web"
+      ],
+      "java_path": [
+        "java_path"
+      ],
+      "domain": [
+        "domain"
+      ],
+      "domain_token": [
+        "domain_token"
+      ],
+      "admin": [
+        "admin"
+      ],
+      "org": [
+        "org"
+      ],
+      "market_id": [
+        "market_id"
+      ],
+      "market_name": [
+        "market_name"
+      ],
+      "centralPswd": [
+        "centralPswd"
+      ],
+      "regiserv": [
+        "regiserv"
+      ],
+      "device": [
+        "device"
+      ]
     }
   }
 }
