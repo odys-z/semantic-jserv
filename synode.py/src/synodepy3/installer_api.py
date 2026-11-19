@@ -1255,10 +1255,12 @@ class InstallerCli:
         # upgrade.exe, packed as upgrade.pkg (Windows packages only)
         promote_upgrade_pkg()
 
-        if (Path(mypath) / 'desktop').exists():
+        # desktop/ is in the install folder, the working folder (like WEB-INF/, volume/), not beside
+        # this module: frozen by PyInstaller, __file__ (mypath) is in _internal/, without desktop/.
+        if Path('desktop').exists():
             self.update_clients([(Path('desktop'), 'settings/app-settings.json')])
         else:
-            print(f'*** Updating destop ignored in os type {os.name}')
+            print(f'*** No desktop/ in {Path.cwd()}, updating the desktop settings ignored')
 
     def update_clients(self, clients_sets: Iterable[tuple[Path, str]]) -> None:
         for apppath, setpath in clients_sets:

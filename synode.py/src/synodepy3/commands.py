@@ -18,7 +18,7 @@ from anson.io.odysz.common import Utils, LangExt
 from invoke import task
 from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db, doctree_db
 
-from .__version__ import jar_ver, synode_ver
+from .__version__ import jar_ver, synodepy3_ver
 
 from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_res, \
     resource_json, InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
@@ -168,7 +168,7 @@ def update_srv(pkg_path: str, sandbox: bool = False):
     if pkg_res is None:
         print(f'Warning: the package has no {resource_json}, its versions are not checked.', file=sys.stderr)
     else:
-        why = pkg_res.refuses_upgrader(synode_ver) or pkg_res.refuses(installed.jar_ver())
+        why = pkg_res.refuses_upgrader(synodepy3_ver) or pkg_res.refuses(installed.jar_ver())
         if why:
             print(f'Upgrade refused: {why}.\nNothing is changed.', file=sys.stderr)
             return
