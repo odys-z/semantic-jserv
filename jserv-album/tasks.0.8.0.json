@@ -3,7 +3,7 @@
   "ver_synodepy3": "0.8.3",
   "apk_ver"      : "0.7.5",
   "html_jar_v"   : "0.2.1",
-  "web_ver"      : "0.4.5",
+  "web_ver"      : "0.4.6",
   "desktop_ver"  : "0.1.2",
   "ipcagent_ver" : "0.2.1",
   "web_inf_dir"  : "src/main/webapp/WEB-INF-0.8",
