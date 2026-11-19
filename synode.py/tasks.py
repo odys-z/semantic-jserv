@@ -138,6 +138,7 @@ def config(c, abstask_json: str):
     version_file = os.path.join(this_directory, 'src', 'synodepy3', '__version__.py')
     Utils.update_patterns(version_file, {
         'synode_ver = "[0-9\\.]+"': f'synode_ver = "{taskcfg.version}"',
+        'synodepy3_ver = "[0-9\\.]+"': f'synodepy3_ver = "{taskcfg.synodepy3_ver()}"',
         'jar_ver = "[0-9\\.]+"': f'jar_ver = "{taskcfg.version}"',
         'web_ver = "[0-9\\.]+"': f'web_ver = "{taskcfg.web_ver}"',
         'html_srver = "[0-9\\.]+"': f'html_srver = "{taskcfg.html_jar_v}"',
