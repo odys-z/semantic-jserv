@@ -4,13 +4,13 @@
   "files": {
     "synode": "bin/jserv-album-0.8.2.jar",
     "html-web": "bin/html-web-0.2.1.jar",
-    "synode.py": "bin/synode_py3-0.8.3-py3-none-any.whl"
+    "synode.py": "bin/synode_py3-0.8.4-py3-none-any.whl"
   },
   "versions": {
     "jar_ver": "0.8.2",
     "web_ver": "0.4.6",
     "html_srver": "0.2.1",
-    "synodepy3": "0.8.3"
+    "synodepy3": "0.8.4"
   },
   "// upgrade_from": "the installed versions this package upgrades, both inclusive and optional",
   "upgrade_from": {
