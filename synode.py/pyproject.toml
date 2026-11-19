@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "synode.py3"
-version = "0.8.3" # updated by invoke
+version = "0.8.4" # updated by invoke
 description = "Portfolio Synode Stand Alone Service"
 readme = "README.md"
 license = "Apache-2.0"
@@ -14,9 +14,9 @@ requires-python = ">=3.12.0"
 dependencies = [
     "pyside6>=6.6.0,<=6.8.2.1",
     "qrcode",
-    "semantics.py3>=0.6.21",   # WebConfig.startHandlers (html-service.json, kept when the installer writes it); PkgResources.load(), ConfigUpgrades (bin/resource.json), read by the upgrade; SsException
-    "anson.py3>=0.6.13",       # writes a list in a list, html-service.json's startHandlers
-    "anclient.py3>=0.2.8",     # a real login to the central, SessionClient.userReq() with the session header
+    "semantics.py3>=0.6.23",
+    "anson.py3>=0.6.13",
+    "anclient.py3>=0.2.8",
     "jre-mirror>=0.1.2",
     "psutil",
     "pillow>=10.0.0",
