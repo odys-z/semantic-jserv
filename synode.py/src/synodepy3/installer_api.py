@@ -262,30 +262,6 @@ def remove_desktop_shortcut(synid: str, folder: str = '.') -> Optional[str]:
     return _desktop_shortcut('remove-shortcut', synid, folder)
 
 
-def promote_upgrade_whl(folder: str = '.') -> bool:
-    """
-    The Linux counterpart of promote_upgrade_pkg(). On Linux unpacking a new package only brings the new
-    wheel, <folder>/bin/synode_py3-*.whl. This installs it, with the Python running this, so the
-    next upgrade runs the new version. pip --upgrade keeps a re-deployment of the same version as is.
-
-    Linux can replace the files of the running package (the process keeps the modules it has loaded),
-    so this can be the last step of the running upgrade (commands.update_srv()).
-    :param folder: the installation folder, default the working folder.
-    :return: True if pip succeeded.
-    """
-    whls = sorted(Path(folder, 'bin').glob('synode_py3-*.whl'), key=os.path.getmtime, reverse=True)
-    if not whls:
-        print(f'No bin/synode_py3-*.whl in {os.path.abspath(folder)}, the upgrade tool is kept as is.')
-        return False
-    cmd = [sys.executable, '-m', 'pip', 'install', '--upgrade', str(whls[0])]
-    print(' '.join(cmd))
-    r = subprocess.run(cmd)
-    if r.returncode != 0:
-        Utils.warn(f'Cannot install {whls[0]} (pip exit code {r.returncode}); install it by hand for the next '
-                   f'upgrade:\n    {" ".join(cmd)}')
-    return r.returncode == 0
-
-
 synode_ui = cast(UIResources, Anson.from_file(os.path.join(mypath, "synode.json")))
 err_uihandlers: list[OnError] = cast(list, [None])
 

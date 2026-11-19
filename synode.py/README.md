@@ -8,13 +8,15 @@ Synode.py is the synchronization node for Portfolio, a file / resources synchron
 
 - Auto-upgrade module
 
-  For Linux, with the synode_py3 wheel installed (pip install bin/synode_py3-*.whl):
+  For Linux, the upgrade tool is synode.py3 from PyPI. Upgrade it first (it may already be the same
+  version), then, in the installation folder:
 
   ```
+    pip install -U synode.py3
     synode-upgrade-srv path-to-new-version.tar.gz
   ```
 
-  It ends by installing the new package's bin/synode_py3-*.whl, so the next upgrade runs the new version.
+  The package's bin/synode_py3-*.whl is not installed by the upgrade.
 
   For Windows
 

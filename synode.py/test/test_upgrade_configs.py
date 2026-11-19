@@ -90,9 +90,8 @@ def test_upgrade_080_to_082(tmp_path: Path, monkeypatch):
     # no real services here
     monkeypatch.setattr(commands, 'Sudo', lambda: None)
     monkeypatch.setattr(commands, 'stop_sysunits', lambda cli, sudo: ['synode.service', 'html-web.service'])
-    monkeypatch.setattr(commands, 'apply_unit_resources', lambda sudo, units, old, new: True)
+    monkeypatch.setattr(commands, 'apply_unit_resources', lambda sudo, units, new: True)
     monkeypatch.setattr(commands, 'restart_sysunits', lambda sudo, units, ask=False: {u: 'active' for u in units})
-    monkeypatch.setattr(commands, 'promote_upgrade_whl', lambda: True)
     monkeypatch.chdir(root)
 
     commands.update_srv(str(tar))

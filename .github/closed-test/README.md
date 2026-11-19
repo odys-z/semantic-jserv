@@ -182,8 +182,9 @@ The checks: first, a copy of the upgrade package with `upgrade_from` min 99.0.0
 after the upgrade, "Update complete" and every backed-up file "Restored" in the upgrade's log
 (`closed_test.py upgraded`; the files are not compared afterwards, as the restarted jserv rewrites
 `settings.json`), the node is the same domain / synode, the services run the jars of the new
-`bin/resource.json` (`closed_test.py resources-applied`), they are up, and on Linux the installed
-synode_py3 is the package's.
+`bin/resource.json` (`closed_test.py resources-applied`), and they are up. On Linux the upgrade tool
+is synode.py3 from PyPI (`pip install -U synode.py3` before upgrading, possibly the same version); the
+package's `bin/synode_py3-*.whl` is not installed by the upgrade.
 
 ### Build marks
 

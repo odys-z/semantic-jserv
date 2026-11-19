@@ -55,9 +55,10 @@ setup_node() {
 # upgrade_node <node> <jserv-port> <expected synode id> <package.tar.gz>
 #   synode-upgrade-srv <tar.gz> in the installation folder (synodepy3 commands.update_srv()): stops the
 #   2 units, backs up the data and settings, unpacks the package over the folder, copies the backup
-#   back, points the units to the jars in the new bin/resource.json, restarts them, and installs the
-#   package's bin/synode_py3-*.whl, the upgrade tool itself. It must not ask anything: stdin is
-#   /dev/null, so a prompt would fail the upgrade.
+#   back, points the units to the jars in the new bin/resource.json and restarts them. The tool is
+#   synode.py3 from PyPI, upgraded before (pip install -U synode.py3, the workflow's step 8); the
+#   package's bin/synode_py3-*.whl is not installed. It must not ask anything: stdin is /dev/null,
+#   so a prompt would fail the upgrade.
 upgrade_node() {
   local before after
   check_central || return 1
@@ -78,7 +79,6 @@ upgrade_node() {
   [ "$after" = "$before" ] || { echo "::error::$1: services changed: '$before' -> '$after'"; return 1; }
   python $CONFIG/closed_test.py resources-applied $WORK/$1 || return 1        # the new jars
   check_services $1 $2 || return 1
-  python $CONFIG/closed_test.py upgrade-tool "$4" || return 1                  # the new synode_py3
   systemctl cat "${after%% *}" > $WORK/logs/$1-service-after-upgrade.txt || true
 }
 

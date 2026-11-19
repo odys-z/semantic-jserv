@@ -10,17 +10,17 @@
 # 7b.  The installed synode-upgrade-srv refuses a copy of the upgrade package whose bin/resource.json
 #      doesn't accept the installed version (upgrade_from min 99.0.0): nothing changed, no backup,
 #      services up. Skipped if the installed package has no bin/resource.json (its tool predates it).
-# 8.   Upgrades hub, prv1, prv2 one by one, in each installation folder, with the installed
-#      synode-upgrade-srv (the wheel of the installed package, as a user runs it):
+# 8.   Upgrades the upgrade tool from PyPI, as a user does (pip install -U synode.py3; it may be the
+#      same version as the installed one), then hub, prv1, prv2 one by one, in each installation
+#      folder, with it:
 #          synode-upgrade-srv <upgrade package tar.gz>
 #      with stdin from /dev/null (an upgrade asks nothing)
 #      (synodepy3 commands.update_srv(): stop the 2 units, back up the volume's dbs and
 #      dictionary.json and the settings, unpack the tar.gz over the folder, copy the backup back,
-#      point the units to the jars of the new bin/resource.json and restart them, then install the
-#      package's bin/synode_py3-*.whl, the upgrade tool itself), and checks: "Update complete", every
-#      backed-up file restored, the node is still the same domain / synode with the same units, which
-#      start the new bin/resource.json's jars, are active and the jserv is up again, and the installed
-#      synode_py3 is the package's.
+#      point the units to the jars of the new bin/resource.json and restart them; the package's
+#      bin/synode_py3-*.whl is not installed), and checks: "Update complete", every backed-up file
+#      restored, the node is still the same domain / synode with the same units, which start the new
+#      bin/resource.json's jars, are active and the jserv is up again.
 # 9.   The central's domain tables again (ci-0.8 hub h, peers p; other domains unchanged), file 1
 #      still on every node, and file 2 pushed and synchronized after the upgrade.
 
@@ -137,6 +137,7 @@ jobs:
       # ---- 8. upgrade: stop the units, upgrade, point them to the new jars, restart them ----
       - name: Upgrade the synodes (synode-upgrade-srv)
         run: |
+          pip install -q -U synode.py3        # the upgrade tool, from PyPI; may be the same version
           . $CONFIG/linux_nodes.sh
           upgrade_node hub  8961 $HUB_ID           "$UPGRADE_PKG"
           upgrade_node prv1 8962 $CENTRAL_DOMAIN-1 "$UPGRADE_PKG"

@@ -20,12 +20,9 @@ Used by the synodes-{windows,linux}-{closed,upgrade}-test.yml workflows.
 
 repack: a copy of a package whose bin/resource.json is updated with <json> (top-level keys replaced),
 e.g. '{"upgrade_from": {"min": "99.0.0"}}', for testing that the upgrade refuses it.
-    python closed_test.py upgrade-tool <package.tar.gz | .zip>
 
 service-names prints the Windows (winsrv.*) or Linux (linusrv.*) service names saved in settings.json.
 h-photos: a docname with '%' is a LIKE pattern; each node needs at least --min rows (default 1).
-upgrade-tool: the installed synode_py3 is the version of the package's bin/synode_py3-*.whl
-(Linux: synode-upgrade-srv installs it, synodepy3 installer_api.promote_upgrade_whl()).
 
 packed-bats: the package's winsrv/install-*.bat are stamped at build (jserv-album/tasks.py config,
 the BEGIN line's mark), with the jar versions of its bin/resource.json; Windows packages since installing
@@ -427,31 +424,6 @@ def packed_bats(node):
     summary(f'### Build mark: winsrv bats {BUILD_MARK} ({", ".join(stamped)})')
 
 
-def upgrade_tool(package):
-    """The installed synode_py3 is the version of the package's wheel (its file name, as pip reads it)."""
-    import tarfile
-    import zipfile
-    from importlib.metadata import version, PackageNotFoundError
-    if package.endswith('.zip'):
-        with zipfile.ZipFile(package) as z:
-            names = z.namelist()
-    else:
-        with tarfile.open(package) as t:
-            names = t.getnames()
-    whls = [os.path.basename(n) for n in names
-            if re.match(r'^(\./)?bin/synode_py3-[^/]+\.whl$', n)]
-    if len(whls) != 1:
-        fail(f'{os.path.basename(package)}: expected one bin/synode_py3-*.whl, found {whls}')
-    expect = whls[0].split('-')[1]
-    try:
-        got = version('synode_py3')
-    except PackageNotFoundError:
-        fail('synode_py3 is not installed')
-    if got != expect:
-        fail(f'the installed synode_py3 is {got}, the package has {whls[0]} (the upgrade did not install it?)')
-    print(f'synode_py3 {got}, the same as {whls[0]}')
-
-
 def repack(package, out, patch):
     """A copy of a package (zip or tar.gz) with its bin/resource.json updated by the json patch."""
     import io
@@ -521,8 +493,6 @@ def main():
         shortcuts(*a)
     elif cmd == 'repack':
         repack(*a)
-    elif cmd == 'upgrade-tool':
-        upgrade_tool(a[0])
     else:
         sys.exit(__doc__)
 

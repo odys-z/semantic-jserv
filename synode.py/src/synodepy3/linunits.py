@@ -9,6 +9,7 @@ linusrv/remove-srv.py) and commands.update_srv() (stop, update the unit files, r
 """
 import getpass
 import os
+import re
 import subprocess
 import sys
 from typing import Dict, List, Optional, Tuple
@@ -17,10 +18,10 @@ from anson.io.odysz.common import Utils
 from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
 from semanticshare.io.oz.syn.registry import SynodeConfig
 
-from .__version__ import jar_ver, web_ver
 from semanticshare.io.oz.syn.pkgresource import PkgResources
 
-from .installer_api import InstallerCli, settings_json, web_inf, jserv_07_jar, html_web_jar, res_synode, res_htmlweb
+from .installer_api import InstallerCli, settings_json, web_inf, res_synode, res_htmlweb, \
+    load_resources, running_resources
 from .jre_downloader import _jre_
 
 linusrv = 'linusrv'
@@ -46,7 +47,12 @@ def generate_service_templ(s: AppSettings, c: SynodeConfig, xms:str='1g', xmx='8
 
     cwd = os.getcwd()
     java_home = f'{cwd}/{_jre_}'
-    synode_desc = f'Synode {jar_ver} {c.synid}'
+    # the package's jars (bin/resource.json), not this tool's __version__: the tool (synode.py3 from PyPI)
+    # can be another version than the package
+    res = load_resources()
+    if res is None:
+        res = running_resources()
+    synode_desc = f'Synode {res.jar_ver()} {c.synid}'
     etc_syn = f"""[Unit]
 
 
@@ -58,7 +64,7 @@ Type=simple
 User={_login_user()}
 WorkingDirectory={cwd}
 Environment="JAVA_HOME={java_home}"
-ExecStart={java_home}/bin/java -jar {cwd}/bin/{jserv_07_jar}
+ExecStart={java_home}/bin/java -jar {cwd}/{res.file(res_synode)}
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -69,7 +75,7 @@ Environment="JAVA_OPTS=-Xms{xms} -Xmx{xmx}"
 WantedBy=multi-user.target
     """
 
-    web_desc = f'Synode {web_ver} {c.synid}'
+    web_desc = f'Synode {res.versions.get("web_ver")} {c.synid}'
     etc_web = f"""[Unit]
 Description={web_desc}
 After=network.target
@@ -79,7 +85,7 @@ Type=simple
 User={_login_user()}
 WorkingDirectory={cwd}
 Environment="JAVA_HOME={java_home}"
-ExecStart={java_home}/bin/java -jar {cwd}/bin/{html_web_jar}
+ExecStart={java_home}/bin/java -jar {cwd}/{res.file(res_htmlweb)}
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -285,41 +291,54 @@ def stop_sysunits(cli: InstallerCli, sudo: Sudo) -> Optional[List[str]]:
     return names
 
 
-def apply_unit_resources(sudo: Sudo, units: List[str], old: PkgResources, new: PkgResources) -> bool:
+def apply_unit_resources(sudo: Sudo, units: List[str], new: PkgResources) -> bool:
     """
-    Upgrade's step 5 on Linux, before restarting: point the units to the new package's files. For each
-    item whose file changed between the installed package's manifest and the new one (bin/resource.json,
-    synode -> the jserv unit, html-web -> the web unit), replace the old path in the unit file (ExecStart)
-    with the new one, then daemon-reload. The unit names don't change.
+    Upgrade's step 5 on Linux, before restarting: point the units to the new package's files
+    (bin/resource.json, synode -> the jserv unit, html-web -> the web unit). The jar a unit actually
+    starts is read from its ExecStart (... -jar <dir>/<name>-<version>.jar), not taken from the installed
+    package's manifest, which may not be what the unit starts (e.g. a unit installed by a tool of another
+    version, or a previous upgrade that failed to change it). If it isn't the new one, it is replaced,
+    keeping <dir>, and the Description's version (Synode <version> <synid>) is updated; then daemon-reload.
+    The unit names don't change.
 
     :param units: the units, jserv first (stop_sysunits())
-    :param old: the installed package's manifest
     :param new: the new package's manifest
-    :return: False if a unit file doesn't have the old path, or can't be written (it is left as it was)
+    :return: False if a unit file doesn't start a jar of the item, or can't be written (it is left as it was)
     """
     import tempfile
 
     ok, changed = True, False
-    for unit, item in zip(units, (res_synode, res_htmlweb)):
-        o, n = old.file(item), new.file(item)
-        if not n or o == n:
+    for unit, item, ver in zip(units, (res_synode, res_htmlweb), ('jar_ver', 'web_ver')):
+        n = new.file(item)
+        if not n:
             continue
+        name = os.path.basename(n)
+        # jserv-album-0.8.2.jar -> jserv-album-, the jar's name without the version
+        prefix = re.sub(r'\d[^/]*\.jar$', '', name)
         path = _unit_path(unit)
         with open(path, encoding='utf-8') as f:
             text = f.read()
-        if not o or o not in text:
-            print(f'Error: {path} does not start {o}, not changed to {n}', file=sys.stderr)
+        m = re.search(r'(-jar\s+)(\S*/)?(' + re.escape(prefix) + r'\d[^/\s]*\.jar)', text)
+        if not m:
+            print(f'Error: {path} does not start a {prefix}*.jar, not changed to {n}', file=sys.stderr)
             ok = False
             continue
+        if m.group(3) == name:
+            continue
+        cur = (m.group(2) or '') + m.group(3)
+        text = text[:m.start(3)] + name + text[m.end(3):]
+        v = new.versions.get(ver)
+        if v:
+            text = re.sub(r'^(Description=Synode )\S+', lambda d: d.group(1) + v, text, count=1, flags=re.M)
         with tempfile.NamedTemporaryFile('w', suffix='.service', delete=False, encoding='utf-8') as t:
-            t.write(text.replace(o, n))
+            t.write(text)
         r = sudo.run('install', '-m', '644', '-o', 'root', '-g', 'root', t.name, path)
         os.unlink(t.name)
         if r.returncode != 0:
             print(f'Error writing {path}: {r.stderr.strip()}', file=sys.stderr)
             ok = False
             continue
-        print(f'{unit}: {o} -> {n}')
+        print(f'{unit}: {cur} -> {(m.group(2) or "") + name}')
         changed = True
     if changed:
         _daemon_reload(sudo)

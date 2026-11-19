@@ -20,7 +20,7 @@ from semanticshare.io.oz.jserv.docs.syn.singleton import sys_db, syn_db, doctree
 
 from .__version__ import jar_ver, synodepy3_ver
 
-from .installer_api import promote_upgrade_whl, load_resources, running_resources, read_package_res, \
+from .installer_api import load_resources, running_resources, read_package_res, \
     resource_json, InstallerCli, dictionary_json, settings_json, web_inf, album_web_dist, web_host_json, \
     html_service_json, desktop_exe, desktop_running, desktop_dir, create_desktop_shortcut
 from .sdoc import sphinx_of_installer, build_pages
@@ -114,11 +114,13 @@ def update_srv(pkg_path: str, sandbox: bool = False):
          404 pages are built with it (ISSUE sdoc-sphinx-venv, sdoc.build_pages()).
       5. point the services to the new package's files, by comparing its bin/resource.json with the
          installed one, and restart them:
-         Linux: replace the changed jar paths in the unit files (linunits.apply_unit_resources());
+         Linux: replace the jar each unit file actually starts, if not the new one, whatever the
+         installed manifest says (linunits.apply_unit_resources());
          Windows: if the versions changed, reinstall the services with the new names and jars, saved
          in settings.envars (winsrv.apply_winsrv_resources())
-      6. Linux: install the new package's bin/synode_py3-*.whl, the upgrade tool itself, so that the
-         next upgrade runs the new version (installer_api.promote_upgrade_whl()). Windows: the new
+      6. Linux: nothing; the upgrade tool is synode.py3 from PyPI, installed by the user before
+         upgrading (pip install -U synode.py3), which can be the same version as the package's
+         synodepy3. The package's bin/synode_py3-*.whl is not installed. Windows: the new
          upgrade.exe is unpacked as upgrade.pkg, beside the running upgrade.exe, and moved by setup-*.
       7. if the desktop is packaged, create (or refresh) the synode's shortcuts with the new package's
          desktop/create-shortcut script, so that a synode installed before the shortcuts gets them
@@ -330,13 +332,9 @@ def update_srv(pkg_path: str, sandbox: bool = False):
             applied = restart_wsrvs()
     else:
         if new_res is not None:
-            applied = apply_unit_resources(cast(Sudo, sudo), units, old_res, new_res)
+            applied = apply_unit_resources(cast(Sudo, sudo), units, new_res)
         for u, st in restart_sysunits(cast(Sudo, sudo), units, ask=False).items():
             print(f'{u}: {st}')
-
-    # 6. the upgrade tool itself (Linux): the running process keeps the modules it has loaded
-    if unpacked and not Utils.iswindows():
-        promote_upgrade_whl()
 
     # 7. the synode's shortcuts, with the new package's script (an installation before them gets them)
     if unpacked and desktop_exe() is not None:
