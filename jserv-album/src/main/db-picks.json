@@ -1,0 +1,24 @@
+{
+  "type": "io.oz.sdoc.DbPicks",
+  "picks": [
+    { "type": "io.oz.sdoc.DbPick",
+      "mark": "DB-PICKING-0.8.2 s_docnodes.tipjson",
+      "tabl": "s_docnodes", "col": "tipjson", "names": ["tipjson", "json"] },
+    { "type": "io.oz.sdoc.DbPick",
+      "mark": "DB-PICKING-0.8.2 s_docnodes.rstext",
+      "tabl": "s_docnodes", "col": "rstext", "names": ["rstext", "rst"] },
+    { "type": "io.oz.sdoc.DbPick",
+      "mark": "DB-PICKING-0.8.2 s_docnodes.docxstyle",
+      "tabl": "s_docnodes", "col": "docxstyle", "names": ["docxstyle", "style"] },
+    { "type": "io.oz.sdoc.DbPick",
+      "mark": "DB-PICKING-0.8.2 s_docs.template",
+      "tabl": "s_docs", "col": "template", "names": ["template"],
+      "dflt": "rtd-0.8", "where": "builtAt is not null" }
+  ],
+  "inits": [
+    { "type": "io.oz.sdoc.DbInitRow",
+      "mark": "DB-PICKING-0.8.2 oz_autoseq:s_docnodes.nid",
+      "tabl": "oz_autoseq", "key": ["sid"],
+      "nvs": [["sid", "s_docnodes.nid"], ["seq", "0"], ["remarks", "by DoctreeDBUpgrade"]] }
+  ]
+}

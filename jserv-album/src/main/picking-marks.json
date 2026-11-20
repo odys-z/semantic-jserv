@@ -1,0 +1,29 @@
+{
+  "//": "Generated with db-picks.json and resource.json's config_picks (by Claude), not edited by hand: each mark of a picking item and the source file, relative to the github folder, where the mark is in a comment of the line needing the item. DB-PICKING-<version> <table>.<column> | <table>:<key>: an item of db-picks.json; JSON-PICKING-<version> <file>#<field>: a field of resource.json's config_picks, marked at its configuration type's field. Checked by picking.py, at package() and by synode.py/test/test_picking_marks.py.",
+  "marks": {
+    "DB-PICKING-0.8.2 s_docnodes.tipjson": "semantic-doc/doctree.jserv/src/main/java/io/oz/sdoc/S_DocNodeMeta.java",
+    "DB-PICKING-0.8.2 s_docnodes.rstext": "semantic-doc/doctree.jserv/src/main/java/io/oz/sdoc/S_DocNodeMeta.java",
+    "DB-PICKING-0.8.2 s_docnodes.docxstyle": "semantic-doc/doctree.jserv/src/main/java/io/oz/sdoc/S_DocNodeMeta.java",
+    "DB-PICKING-0.8.2 s_docs.template": "semantic-doc/doctree.jserv/src/main/java/io/oz/sdoc/S_DocsMeta.java",
+    "DB-PICKING-0.8.2 oz_autoseq:s_docnodes.nid": "semantic-doc/doctree.jserv/src/main/java/io/oz/sdoc/S_DocNodeMeta.java",
+    "JSON-PICKING-0.8.2 WEB-INF/html-service.json#welcomepages": "html-service/java/src/main/java/io/oz/srv/WebConfig.java",
+    "JSON-PICKING-0.8.2 WEB-INF/html-service.json#dynaResource.pollInterval_snd": "html-service/java/src/main/java/io/oz/srv/DynaResource.java",
+    "JSON-PICKING-0.8.2 WEB-INF/html-service.json#dynaResource.allowDir": "html-service/java/src/main/java/io/oz/srv/DynaResource.java",
+    "JSON-PICKING-0.8.2 WEB-INF/html-service.json#dynaResource.resource": "html-service/java/src/main/java/io/oz/srv/DynaResource.java",
+    "JSON-PICKING-0.8.2 WEB-INF/html-service.json#dynaResource.danyroot": "html-service/java/src/main/java/io/oz/srv/DynaResource.java",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#synode_id": "antson/semantics.py3/src/semanticshare/io/oz/anclient/app.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#synode_vol": "antson/semantics.py3/src/semanticshare/io/oz/anclient/app.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#synode_jserv": "antson/semantics.py3/src/semanticshare/io/oz/anclient/app.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#album_web": "antson/semantics.py3/src/semanticshare/io/oz/anclient/app.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#java_path": "antson/semantics.py3/src/semanticshare/io/oz/anclient/app.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#domain": "antson/semantics.py3/src/semanticshare/io/odysz/jclient.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#domain_token": "antson/semantics.py3/src/semanticshare/io/odysz/jclient.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#admin": "antson/semantics.py3/src/semanticshare/io/odysz/jclient.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#org": "antson/semantics.py3/src/semanticshare/io/oz/anclient/app.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#market_id": "antson/semantics.py3/src/semanticshare/io/odysz/jclient.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#market_name": "antson/semantics.py3/src/semanticshare/io/oz/anclient/app.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#centralPswd": "antson/semantics.py3/src/semanticshare/io/odysz/jclient.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#regiserv": "antson/semantics.py3/src/semanticshare/io/odysz/jclient.py",
+    "JSON-PICKING-0.8.2 desktop/settings/app-settings.json#device": "antson/semantics.py3/src/semanticshare/io/odysz/jclient.py"
+  }
+}
