@@ -107,7 +107,8 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
 
     # was checked at module level, now paths are from taskcfg
     requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/anreact', '0.8.1')
-    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/semantier', '1.1.1')
+    # @anclient/semantier: not in album-web's node_modules, webpack.config.js aliases it to the source;
+    # build() checks what webpack bundles against the sources with diff-anclient.py --check
 
     # ISSUE central-uid: Synodes log in central as deploy.admin (synusr.uid()), not centralUid.
     # 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
@@ -517,6 +518,10 @@ def build(c: Context, deploy: str = 'tasks.json'):
         # install-sdoc), or the editor of the last install is what's bundled, e.g. without a new button.
         [sdoc_src, 'npm run pack'],
         [web_root, 'npm run install-sdoc'],
+        # stop if what webpack is to bundle isn't the sources: an @anclient/* or semantic-doc copy in
+        # node_modules that is older, or edited by hand (npm doesn't replace a copy of the same tarball)
+        [sdoc_src, f'"{sys.executable}" diff-anclient.py --check'],
+        [os.path.dirname(web_root), f'"{sys.executable}" diff-anclient.py {os.path.basename(web_root)} --check'],
         [web_root, 'webpack'],
 
         [web_dist, updateApkRes],
