@@ -7,7 +7,7 @@ from invoke import task, Context
 import os
 
 # PyInsertall uses what ever packages in the user's venv, not isolated one like the build module.
-from anson.io.odysz.common import requir_pkg, requir_npm_package_resolve, mvn  # mvn: anson.py3 0.6.9+
+from anson.io.odysz.common import requir_pkg, mvn  # mvn: anson.py3 0.6.9+
 _tasks = {a.replace('_', '-') for a in sys.argv[1:] if not a.startswith('-')}
 
 # Tasks that don't need the build environment, e.g. github-head, gh-release.
@@ -91,6 +91,24 @@ def check_env(c):
 
     print("To have invoke run in the curent venv, use")
     print("python -m invoke build --deploy=tasks.pm-king.json")
+
+
+def validate_anclient_deps(c: Context):
+    '''
+    Before any build step: stop if an @anclient/* installed from the npm registry, in album-web's
+    or semantic-doc's node_modules, isn't identical to its source, Anclient/js/* (diff-anclient.py
+    --check). Copy unpublished changes of the sources with diff-anclient.py (s a).
+    semantic-doc itself is packed and installed into album-web by build(), from its source.
+    '''
+    web_root = taskcfg.git_prj('album-web')
+    sdoc_src = os.path.normpath(os.path.join(taskcfg.git_prj('doctree.jserv'), '..', 'src'))
+    for pth, cmd in [
+            [os.path.dirname(web_root),
+             f'"{sys.executable}" diff-anclient.py {os.path.basename(web_root)} --check -p anreact semantier'],
+            [sdoc_src, f'"{sys.executable}" diff-anclient.py --check']]:
+        print('*', pth, '&&', cmd)
+        with c.cd(pth):
+            c.run(cmd)     # raises on a non-zero exit: the task stops
 
 
 @task
@@ -513,15 +531,10 @@ def build(c: Context, deploy: str = 'tasks.json'):
 
         # both builds of album-web (webpack.config.js): [name].min.js, [name].prod.min.js, with .gz and .map
         [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* vendor-*.min.js* doctree*.min.js* report.html'],
-        # album-web bundles semantic-doc (the doc-tree editor) from the tarball installed in its node_modules,
-        # not from the source: pack the source and install the tarball again (album-web's package.json,
-        # install-sdoc), or the editor of the last install is what's bundled, e.g. without a new button.
         [sdoc_src, 'npm run pack'],
         [web_root, 'npm run install-sdoc'],
-        # stop if what webpack is to bundle isn't the sources: an @anclient/* or semantic-doc copy in
-        # node_modules that is older, or edited by hand (npm doesn't replace a copy of the same tarball)
-        [sdoc_src, f'"{sys.executable}" diff-anclient.py --check'],
-        [os.path.dirname(web_root), f'"{sys.executable}" diff-anclient.py {os.path.basename(web_root)} --check'],
+        # [sdoc_src, f'"{sys.executable}" diff-anclient.py --check'],
+        # [os.path.dirname(web_root), f'"{sys.executable}" diff-anclient.py {os.path.basename(web_root)} --check'],
         [web_root, 'webpack'],
 
         [web_dist, updateApkRes],
