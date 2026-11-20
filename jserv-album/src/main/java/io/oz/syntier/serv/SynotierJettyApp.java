@@ -11,6 +11,7 @@ import static io.odysz.common.Utils.logi;
 import static io.odysz.common.Utils.warn;
 import static io.odysz.common.Utils.warnT;
 
+import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.sql.SQLException;
@@ -103,6 +104,8 @@ public class SynotierJettyApp implements Daemon {
 	 * -DWEB-INF=src/main/webapp/WEB-INF for Eclipse tests.
 	 */
 	public static final String webinf = "WEB-INF";
+	/** the doc-tree db's picking list, in the package's bin/, beside resource.json, see semantic-doc DbPicks */
+	public static final String dbpicks = "db-picks.json";
 	public static final String config_xml = "config.xml";
 	public static final String settings_json = "settings.json";
 
@@ -386,7 +389,10 @@ public class SynotierJettyApp implements Daemon {
 
 		// semantic-doc's doc-tree tier, and its resources (pictures) for the editor, reading its working copy
 		DoctreeTier doctree = new DoctreeTier(SynDocollPort.doctree)
-				.conn(DoctreeDBHelper.connect(webinf, settings.volume, synid), synid)
+				// an earlier version's doctree.db is upgraded with the package's picking list, <install>/bin/db-picks.json
+				.conn(DoctreeDBHelper.connect(webinf, settings.volume, synid,
+						Paths.get(webinf).toAbsolutePath().normalize().getParent().resolve("bin").resolve(dbpicks).toString()),
+					synid)
 				.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks)
 				// docs are published at the html-service of this machine (loopback: its port is localhost only)
 				.publisher(new ResPublisher(f("http://127.0.0.1:%s", settings.webport), SynDocollPort.respaths));

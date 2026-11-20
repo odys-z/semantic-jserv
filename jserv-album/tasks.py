@@ -570,6 +570,13 @@ def package(c: Context, deploy: str = 'tasks.json'):
     jre_img = taskcfg.jre_release.split('/')[-1]
     temp_jre_path = f'jre17-temp/{jre_img}'
 
+    # the upgrade picking lists (bin/db-picks.json, resource.json's config_picks) and their marks in the sources
+    import picking
+    checked = picking.check(taskcfg.github, strict=True)
+    if checked.errors:
+        Utils.warn('The picking lists don\'t match the marks in the sources (picking.py):\n{}', '\n'.join(checked.errors))
+        sys.exit(-1)
+
     zip = taskcfg.zip_name()
 
     html_target = taskcfg.git_prj('html-service', 'target')
@@ -638,6 +645,8 @@ def package(c: Context, deploy: str = 'tasks.json'):
         manifest.file('html-web'): f'{html_target}/{taskcfg.htmlweb_jar()}', # clone at github/html-service
         manifest.file('synode'): f'target/{taskcfg.synode_jar()}',
         'bin/resource.json': resource_json,
+        # the doc-tree db's picks, read by the synode when it upgrades the db (semantic-doc DoctreeDBUpgrade)
+        'bin/db-picks.json': picking.db_picks_src,
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 
