@@ -16,7 +16,7 @@ _independent = bool(_tasks & {'github-head', 'gh-release'})
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.13") # gzip2() excludes by the paths in the package
-    requir_pkg("semantics.py3", "0.6.21") # WebAssets, WebConfig.startHandlers; SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load()
+    requir_pkg("semantics.py3", "0.6.24") # WebAssets, WebConfig.startHandlers; SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load(); io.oz.syn.dbpicks
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("anclient.py3", "0.2.8")
@@ -68,6 +68,13 @@ re_webport       = '\"webport\"\\s*:\\s*[0-9]+'
 re_jserv_port    = '\"port\"\\s*:\\s*\\d+'
 
 taskcfg = cast(SynodeTask, None)
+
+# The upgrade picking lists, generated and merged at each upgrade (by Claude): the doc-tree db's
+# (semanticshare io.oz.syn.dbpicks.DbPicks), and resource.json's config_picks; their marks in the sources
+# are checked by DbPicks.check_marks(), with picking-marks.json. Paths relative to jserv-album.
+doctree_picks_src = os.path.join('src', 'main', 'doctree-picks.json')
+resource_src = os.path.join('src', 'main', 'resource.json')
+picking_marks_src = os.path.join('src', 'main', 'picking-marks.json')
 
 @task
 def check_env(c):
@@ -570,11 +577,13 @@ def package(c: Context, deploy: str = 'tasks.json'):
     jre_img = taskcfg.jre_release.split('/')[-1]
     temp_jre_path = f'jre17-temp/{jre_img}'
 
-    # the upgrade picking lists (bin/db-picks.json, resource.json's config_picks) and their marks in the sources
-    import picking
-    checked = picking.check(taskcfg.github, strict=True)
+    # the upgrade picking lists (bin/doctree-picks.json, resource.json's config_picks) and their marks in the sources
+    from semanticshare.io.oz.syn.dbpicks import DbPicks
+    checked = DbPicks.load(doctree_picks_src).check_marks(
+            taskcfg.github, picking_marks_src, PkgResources.load(resource_src).config_picks, strict=True)
     if checked.errors:
-        Utils.warn('The picking lists don\'t match the marks in the sources (picking.py):\n{}', '\n'.join(checked.errors))
+        Utils.warn('The picking lists don\'t match the marks in the sources (DbPicks.check_marks(), {}):\n{}',
+                   picking_marks_src, '\n'.join(checked.errors))
         sys.exit(-1)
 
     zip = taskcfg.zip_name()
@@ -605,10 +614,10 @@ def package(c: Context, deploy: str = 'tasks.json'):
         """
         Update src/main/resource.json, the source of the package's manifest, bin/resource.json: its
         files and versions (the Windows service names are made of) are this build's, of tasks.*.json
-        (SynodeTask.pkg_res()). The rest is the file's own, written by hand: upgrade_from (the installed
-        versions it can upgrade), upgrader (the oldest upgrade tool installing it) and config_picks (the
+        (SynodeTask.pkg_res()). The rest is the file's own: upgrade_from (the installed versions it can
+        upgrade) and upgrader (the oldest upgrade tool installing it), written by hand; config_picks (the
         configuration files an upgrade makes of the package's template and the installed values,
-        ConfigPicks). On upgrade, synodepy3 commands.update_srv() checks upgrader and upgrade_from,
+        ConfigPicks), generated (by Claude) and merged at each upgrade, checked with their marks above. On upgrade, synodepy3 commands.update_srv() checks upgrader and upgrade_from,
         makes the picked configuration files, compares the installed
         manifest with the new one, and points the services to the changed files.
         :return: path of resource.json
@@ -637,7 +646,6 @@ def package(c: Context, deploy: str = 'tasks.json'):
             raise ValueError(f'{sdoc_template_src}/manifest.json has no "id". Run semantic-doc/src/make-template.py on it.')
         return tid
 
-    resource_src = os.path.join('src', 'main', 'resource.json')
     resource_json = gen_resource_json()
     manifest = PkgResources.load(resource_json)
 
@@ -646,7 +654,7 @@ def package(c: Context, deploy: str = 'tasks.json'):
         manifest.file('synode'): f'target/{taskcfg.synode_jar()}',
         'bin/resource.json': resource_json,
         # the doc-tree db's picks, read by the synode when it upgrades the db (semantic-doc DoctreeDBUpgrade)
-        'bin/db-picks.json': picking.db_picks_src,
+        'bin/doctree-picks.json': doctree_picks_src,
 
         'WEB-INF': f'{taskcfg.web_inf_dir}/*',
 

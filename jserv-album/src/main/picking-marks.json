@@ -1,5 +1,5 @@
 {
-  "//": "Generated with db-picks.json and resource.json's config_picks (by Claude), not edited by hand: each mark of a picking item and the source file, relative to the github folder, where the mark is in a comment of the line needing the item. DB-PICKING-<version> <table>.<column> | <table>:<key>: an item of db-picks.json; JSON-PICKING-<version> <file>#<field>: a field of resource.json's config_picks, marked at its configuration type's field. Checked by picking.py, at package() and by synode.py/test/test_picking_marks.py.",
+  "//": "Generated with doctree-picks.json and resource.json's config_picks (by Claude), not edited by hand: each mark of a picking item and the source file, relative to the github folder, where the mark is in a comment of the line needing the item. DB-PICKING-<version> <table>.<column> | <table>:<key>: an item of doctree-picks.json; JSON-PICKING-<version> <file>#<field>: a field of resource.json's config_picks, marked at its configuration type's field. Checked by picking.py, at package() and by synode.py/test/test_picking_marks.py.",
   "marks": {
     "DB-PICKING-0.8.2 s_docnodes.tipjson": "semantic-doc/doctree.jserv/src/main/java/io/oz/sdoc/S_DocNodeMeta.java",
     "DB-PICKING-0.8.2 s_docnodes.rstext": "semantic-doc/doctree.jserv/src/main/java/io/oz/sdoc/S_DocNodeMeta.java",
