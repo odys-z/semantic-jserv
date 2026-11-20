@@ -123,11 +123,7 @@ def validate(c: Context, deploy: str = 'tasks.0.8.0.json'):
 
     print('taskcfg:', taskcfg.deploy.orgid, taskcfg.version)
 
-    # was checked at module level, now paths are from taskcfg
-    requir_npm_package_resolve(taskcfg.git_prj('album-web'), '@anclient/anreact', '0.8.1')
-    # @anclient/semantier: not in album-web's node_modules, webpack.config.js aliases it to the source;
-    # build() checks what webpack bundles against the sources with diff-anclient.py --check
-
+    validate_anclient_deps(c)
     # ISSUE central-uid: Synodes log in central as deploy.admin (synusr.uid()), not centralUid.
     # 0.8.0: both must be 'admin'. See ../issues/central-uid-synode-login.md
     if not deploy in ['tasks.0.8.0.json', 'tasks.0.7.8.json', 'tasks.github.json'] and not (taskcfg.deploy.admin == taskcfg.deploy.centralUid == 'admin'):
