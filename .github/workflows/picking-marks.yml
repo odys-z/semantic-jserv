@@ -1,0 +1,98 @@
+# The package's upgrade picking lists against their marks in the sources, as jserv-album/tasks.py
+# package() checks them, on every push changing a list, and by hand from the Actions tab.
+#
+#   jserv-album/src/main/doctree-picks.json   the doc-tree db's picks (io.oz.syn.dbpicks.DbPicks)
+#   jserv-album/src/main/resource.json        config_picks
+#   jserv-album/src/main/picking-marks.json   mark -> source file, relative to the github folder
+#
+# The marks' sources are in odys-z/antson, odys-z/semantic-doc and odys-z/html-service: they are
+# checked out beside semantic-jserv, as in a local github folder, so the check is strict (a source
+# file not found is an error). anson.py3 and semantics.py3 (io.oz.syn.dbpicks, since 0.6.24) are
+# installed from the antson checkout, not PyPI, so the check is the one of the antson ref.
+#
+# 1. python -m semanticshare.io.oz.syn.dbpicks, strict;
+# 2. synode.py/test/test_picking_marks.py, the lists loaded with their types;
+# 3. antson semantics.py3/test/t_05_dbpicks.py, each way a list and its marks can differ.
+
+name: picking-marks
+
+on:
+  push:
+    paths:
+      - 'jserv-album/src/main/doctree-picks.json'
+      - 'jserv-album/src/main/resource.json'
+      - 'jserv-album/src/main/picking-marks.json'
+      - 'synode.py/test/test_picking_marks.py'
+      - '.github/workflows/picking-marks.yml'
+  workflow_dispatch:
+    inputs:
+      antson_ref:
+        description: 'Branch / tag of odys-z/antson'
+        required: false
+        default: 'master'
+      semantic_doc_ref:
+        description: 'Branch / tag of odys-z/semantic-doc'
+        required: false
+        default: 'main'
+      html_service_ref:
+        description: 'Branch / tag of odys-z/html-service'
+        required: false
+        default: 'main'
+
+permissions:
+  contents: read
+
+jobs:
+  marks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_FOLDER: ${{ github.workspace }}     # the "github" folder: the repositories side by side
+      MAIN: ${{ github.workspace }}/semantic-jserv/jserv-album/src/main
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: semantic-jserv
+
+      - uses: actions/checkout@v7
+        with:
+          repository: odys-z/antson
+          ref: ${{ inputs.antson_ref || 'master' }}          # inputs are empty on push
+          path: antson
+
+      - uses: actions/checkout@v7
+        with:
+          repository: odys-z/semantic-doc
+          ref: ${{ inputs.semantic_doc_ref || 'main' }}
+          path: semantic-doc
+
+      - uses: actions/checkout@v7
+        with:
+          repository: odys-z/html-service
+          ref: ${{ inputs.html_service_ref || 'main' }}
+          path: html-service
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install anson.py3, semantics.py3 (antson), pytest
+        run: |
+          python -m pip install -q ./antson/py3 ./antson/semantics.py3 pytest
+          python -c "import semanticshare.io.oz.syn.dbpicks as d; print('dbpicks:', d.__file__)"
+
+      - name: Picking lists against the marks (strict)
+        run: |
+          python -m semanticshare.io.oz.syn.dbpicks --github "$GH_FOLDER" \
+              --picks    "$MAIN/doctree-picks.json" \
+              --resource "$MAIN/resource.json" \
+              --marks    "$MAIN/picking-marks.json"
+
+      - name: synode.py/test/test_picking_marks.py
+        working-directory: semantic-jserv/synode.py
+        run: python -m pytest -q -s test/test_picking_marks.py
+
+      - name: antson semantics.py3/test/t_05_dbpicks.py
+        working-directory: antson/semantics.py3
+        run: python -m pytest -q test/t_05_dbpicks.py

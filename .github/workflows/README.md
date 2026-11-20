@@ -7,13 +7,14 @@
 | `synodes-windows-closed-test.yml` | by hand | The same on Windows: synodes as Windows services, a push from the Java (Android) client |
 | `synodes-windows-upgrade-test.yml` | by hand | The Windows closed test, then `upgrade.exe` on every synode, then the checks again |
 | `version-revival-7days.yml` | every 6 days, or by hand | Builds the test clients, echoes to the central, keeps the vcpkg cache alive |
+| `picking-marks.yml` | on a push changing a picking list, or by hand | The upgrade picking lists (`doctree-picks.json`, `resource.json` config_picks) against their marks in antson, semantic-doc and html-service |
 
 Start one from the Actions tab: pick the workflow, **Run workflow**, choose the branch (e.g.
 `portfolio-0.8`). The test resources and their details are in [`../closed-test/README.md`](../closed-test/README.md).
 
 ## Starting a workflow from the command line
 
-All five workflows have a `workflow_dispatch` trigger, so the GitHub CLI can start them like the
+All six workflows have a `workflow_dispatch` trigger, so the GitHub CLI can start them like the
 **Run workflow** button. `--ref` is the branch whose workflow file and sources are used; each `-f`
 sets one input of the run form, and an input left out takes its default.
 
@@ -40,6 +41,10 @@ gh workflow run synodes-windows-upgrade-test.yml -R $R --ref portfolio-0.8 \
 # revival test, by hand (it also runs every 6 days, from the default branch)
 gh workflow run version-revival-7days.yml -R $R --ref portfolio-0.8
 
+# picking lists against their marks (it also runs on a push changing a list)
+gh workflow run picking-marks.yml -R $R --ref master \
+    -f antson_ref=master -f semantic_doc_ref=main -f html_service_ref=main
+
 # follow the run just started (give GitHub a few seconds to create it), exit status = the run's result
 sleep 5
 id=$(gh run list -R $R --workflow synodes-windows-closed-test.yml --limit 1 --json databaseId -q '.[0].databaseId')
@@ -57,6 +62,7 @@ Inputs and their defaults (the run form shows the same):
 | `synodes-linux-upgrade-test.yml` | the same, and `upgrade_tag` (newest) |
 | `synodes-windows-upgrade-test.yml` | the same, and `upgrade_tag` (newest) |
 | `version-revival-7days.yml` | `anclient_ref` (`portfolio-0.8`), `central_release` (`alpha-central-0.1.8`) |
+| `picking-marks.yml` | `antson_ref` (`master`), `semantic_doc_ref` (`main`), `html_service_ref` (`main`) |
 
 ## Managing the run history
 
