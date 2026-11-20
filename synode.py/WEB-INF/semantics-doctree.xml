@@ -18,6 +18,16 @@
 		<args>docId,0,synode</args>
 	</s>
 	<s>
+		<!-- node id: auto key, unique in the db, e.g. 00000A (Radix32, id-len digits), since doctree.jserv 0.1.4.
+			Before fullpath2: a row's own key is generated before its fullpath is composed.
+			The importer refers to a parent in the same insert by Resulving(s_docnodes, nid, i). -->
+		<id>docnodes.pk</id>
+		<smtc>autopk</smtc>
+		<tabl>s_docnodes</tabl>
+		<pk>nid</pk>
+		<args>nid,0</args>
+	</s>
+	<s>
 		<id>docnodes.fp</id>
 		<smtc>fullpath2</smtc>
 		<tabl>s_docnodes</tabl>
