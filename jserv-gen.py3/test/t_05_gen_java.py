@@ -16,6 +16,10 @@ class GenJavaTest(TestCase):
         self.assertEqual(('boolean', set()), j_type('boolean'))
         self.assertEqual(('HashMap<String, String>', {'java.util.HashMap'}), j_type('map<string, string'))
         self.assertEqual(('ArrayList<Integer>', {'java.util.ArrayList'}), j_type('list<int'))
+        self.assertEqual(('HashMap<String, String>', {'java.util.HashMap'}), j_type('map<string, string>'))
+        self.assertEqual(('HashMap<String, ArrayList<Object>>', {'java.util.HashMap', 'java.util.ArrayList'}),
+                         j_type('map<string, list<VarType'))
+        self.assertEqual(('ArrayList<ArrayList<Object>>', {'java.util.ArrayList'}), j_type('list<list<VarType'))
         self.assertEqual(('ArrayList<Device>', {'java.util.ArrayList', 'io.odysz.semantic.tier.docs.Device'}),
                          j_type('list<io.odysz.semantic.tier.docs.Device'))
 
@@ -28,5 +32,5 @@ class GenJavaTest(TestCase):
 
         self.assertTrue(cpp.exists())
         with (open(testpath + '/expect/t_05_AppSettings.java', 'r') as e,
-              open(java / 'io/oz/jserv/docs/syn/singleton/AppSettings2.java', 'r') as f):
+              open(java / 'io/oz/jserv/docs/syn/singleton/AppSettings.java', 'r') as f):
             self.assertEqual(e.readlines(), f.readlines())

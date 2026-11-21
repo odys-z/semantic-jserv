@@ -1,6 +1,6 @@
 { "type"       : "io.odysz.reflect.PeerSettings",
   "tier_name"  : "synodesettings",
-  "ansons"     : ["appsettings2.ast.json"],
+  "ansons"     : ["appsettings.ast.json"],
   "scopeEnums" : [],
   "javaEnums"  : [],
   "anRequests" : [],
