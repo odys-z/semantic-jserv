@@ -446,4 +446,4 @@ def gen_peers(settings: PeerSettings, ast_folder: Union[str, Path] = None) -> Pa
     # gen_ts_peer(settings)
     # gen_py_peer(settings)
     # gen_cpp_peer(settings, config_path)
-    return gen_cpp_peer2(settings)
+    return gen_cpp_peer2(settings), gen_java_peer(settings)
