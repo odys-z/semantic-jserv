@@ -1,0 +1,10 @@
+{ "type"       : "io.odysz.reflect.PeerSettings",
+  "tier_name"  : "synodesettings",
+  "ansons"     : ["appsettings2.ast.json"],
+  "scopeEnums" : [],
+  "javaEnums"  : [],
+  "anRequests" : [],
+  "cpp_include": [],
+  "cpp_gen"    : "test/gen/py_prj_src/t_05_appsettings.hpp",
+  "java_gen"   : "test/gen/java_prj_src"
+}
