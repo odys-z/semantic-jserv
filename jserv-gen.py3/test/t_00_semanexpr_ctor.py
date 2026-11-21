@@ -4,7 +4,7 @@ from unittest import TestCase
 from anson.io.odysz.anson import Anson
 from semanticshare.io.odysz.reflect import AnCtor, AnsonBodyAst
 
-from src.semantier_gen.io.oz.semanticpeer.generator2 import class_ctors
+from src.semantier_gen.io.oz.semanticpeer.py_generator import class_ctors
 
 
 expt0 = '''

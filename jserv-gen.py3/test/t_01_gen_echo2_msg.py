@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from anson.io.odysz.anson import Anson
 
-from src.semantier_gen.io.oz.semanticpeer.generator2 import gen_peers
+from semantier_gen.__main__ import gen_peers
 from semanticshare.io.odysz.reflect import PeerSettings
 
 

@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast, List, Union
+from typing import cast, List
 
 from anson.io.odysz.anson import Anson
 from anson.io.odysz.common import Utils, LangExt, Primtypes
@@ -439,11 +439,3 @@ def gen_cpp_peer2(settings: PeerSettings) -> Path:
     return gen_pth
 
 
-def gen_peers(settings: PeerSettings, ast_folder: Union[str, Path] = None) -> Path:
-    if Path is not None:
-        settings.ast_folder = ast_folder
-
-    # gen_ts_peer(settings)
-    # gen_py_peer(settings)
-    # gen_cpp_peer(settings, config_path)
-    return gen_cpp_peer2(settings), gen_java_peer(settings)
