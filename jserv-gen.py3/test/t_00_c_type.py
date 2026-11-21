@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src.semantier_gen.io.oz.semanticpeer.py_generator import c_type
+from src.semantier_gen.io.oz.semanticpeer.cpp_generator import c_type
 
 
 class GenCtorsTest(TestCase):

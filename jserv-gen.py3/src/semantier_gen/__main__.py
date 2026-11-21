@@ -6,7 +6,7 @@ from anson.io.odysz.anson import Anson
 from semanticshare.io.odysz.reflect import PeerSettings
 
 from semantier_gen.io.oz.semanticpeer.java_generator import gen_java_peer
-from semantier_gen.io.oz.semanticpeer.py_generator import gen_cpp_peer2
+from semantier_gen.io.oz.semanticpeer.cpp_generator import gen_cpp_peer2
 
 
 def gen_peers(settings: PeerSettings, ast_folder: Union[str, Path] = None) -> tuple[Path, Path]:
@@ -32,4 +32,4 @@ if __name__ == '__main__':
         pypath, javapath = gen_peers(settings, ast_folder)
 
         print(f'Done. Genterated ASTs:\n', settings.ansons)
-        print(f'Output:\n', 'python:\t', pypath.absolute(), 'java:\t', javapath.absolute())
+        print(f'Output:\n', 'python:\t', pypath.absolute(), 'java:\t', None if javapath is None else javapath.absolute())
