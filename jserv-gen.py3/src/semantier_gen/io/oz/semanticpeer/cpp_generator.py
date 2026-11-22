@@ -60,12 +60,17 @@ def c_type(dataAnclass: str) -> str:
         end = end + '>'
     return '<'.join(typss) + (end[:-1] if len(end) > 0 else '')
 
+# C++ scalars are not initialized by default. A request built without setting them,
+# e.g. DocsReq.blockSeq / limit / reset, sends garbage from the stack to the peers.
+_cpp_scalars = {'int', 'long', 'float', 'double', 'bool'}
+
 def class_fields(asts: dict[str, AnsonAst], ast: AnsonAst) -> List[str]:
     fields = []
 
     for fn, fd in ast.fields.items():
         data_anclass = fd['dataAnclass']
-        fields.append(f'    {c_type(data_anclass)} {fn};\n')
+        ctype = c_type(data_anclass)
+        fields.append(f'    {ctype} {fn}{"{}" if ctype in _cpp_scalars else ""};\n')
 
     return fields
 

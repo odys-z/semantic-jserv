@@ -343,13 +343,20 @@ public class ExpDoctier extends ServPort<DocsReq> {
 
 		String tempDir = ((DocUser)usr).touchTempDir(conn, body.docTabl);
 
-		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
-
 		String id = chainId(usr, body.doc.clientpath);
 
-		if (blockChains.containsKey(id))
-			throw new SemanticException("Why started again?");
+		// Abort the stale chain before opening the new one: both write the same temp file.
+		if (blockChains.containsKey(id)) {
+			if (!body.reset)
+				throw new SemanticException("Why started again?");
 
+			// A previous push of the same file failed without ending or aborting
+			// its chain (e. g. a dropped connection). The client asks to start over.
+			Utils.warn("[ExpDoctier.startBlocks] Resetting an unfinished block chain: %s", id);
+			blockChains.remove(id).abortChain();
+		}
+
+		BlockChain chain = new BlockChain(body.docTabl, tempDir, body.device().id, body.doc);
 		blockChains.put(id, chain);
 		return new DocsResp()
 				.blockSeq(-1)
