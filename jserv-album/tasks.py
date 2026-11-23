@@ -525,10 +525,12 @@ def build(c: Context, deploy: str = 'tasks.json'):
         ['.', f'cp -f {taskcfg.get_gradleprj_apk()} {web_dist}/res-vol/{taskcfg.get_apk_name()}' \
                 if os.name == 'nt' else f'touch {web_dist}/res-vol/portfolio-{taskcfg.apk_ver}.apk' ], # TODO build apk in Linux...
 
-        # both builds of album-web (webpack.config.js): [name].min.js, [name].prod.min.js, with .gz and .map
-        [f'{web_dist}', 'rm -f login*.min.js* portfolio*.min.js* vendor-*.min.js* doctree*.min.js* report.html'],
+        # both builds of album-web (webpack.config.js): [name].min.js, [name].prod.min.js, with .gz and .map;
+        # all the chunks: entries, vendor-*, lazy pages (doctree, story) and webpack's unnamed chunks (_*),
+        # so a chunk the builds no longer emit is not packed (webpack-assets.json lists the emitted ones)
+        [f'{web_dist}', 'rm -f *.min.js *.min.js.gz *.min.js.map *.min.js.map.gz webpack-assets.json report.html'],
         [sdoc_src, 'npm run pack'],
-        [web_root, 'npm run install-sdoc'],
+        [web_root, 'npm run install-semantic-doc'],
         # [sdoc_src, f'"{sys.executable}" diff-anclient.py --check'],
         # [os.path.dirname(web_root), f'"{sys.executable}" diff-anclient.py {os.path.basename(web_root)} --check'],
         [web_root, 'webpack'],
