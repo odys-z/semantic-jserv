@@ -819,7 +819,7 @@ def github_head(c: Context, deploy: str = 'tasks.closed-test.json'):
     Independent of the build environment (no validate, JAVA_HOME, maven or npm checks).
 
     :: bash
-        inv github-head --deploy=tasks.pm-king.json
+        inv github-head --deploy=tasks.0.8.0.json
     ..
 
     :param c: Context
