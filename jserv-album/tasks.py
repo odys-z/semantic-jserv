@@ -34,6 +34,7 @@ if 'install-maven-local' not in _tasks and not _independent:
     mvn.requir_installed("io.github.odys-z:anclient.java", "[0.5.24,)")
     mvn.requir_installed("io.github.odys-z:semantic.jserv", "[1.5.21,)")
     mvn.requir_installed("io.github.odys-z:docsync.jserv", "[0.3.6,)")
+    mvn.requir_installed("io.github.odys-z:doctree.jserv", "[0.1.6,)")  # semantic-doc, not published yet
     mvn.requir_installed("io.github.odys-z:html-web", "[0.2.1,)")
     mvn.requir_installed("io.github.odys-z:ws-agent", "[0.2.1,)")
 

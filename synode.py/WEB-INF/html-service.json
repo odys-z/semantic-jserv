@@ -1,8 +1,8 @@
 {
-  "type": "io.oz.srv.WebConfig",
+  "type": "io.odysz.semantic.jserv.WebConfig",
   "port": 1989,
   "paths": [{
-    "type": "io.oz.srv.StaticResource",
+    "type": "io.odysz.semantic.jserv.StaticResource",
     "path": "/*",
     "resource": "web-dist",
     "allowDir": false

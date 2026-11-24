@@ -26,7 +26,7 @@ from typing import List, cast, Optional, Callable, Final, Iterable, Tuple
 from anson.io.odysz.anson import Anson, AnsonException
 from anson.io.odysz.common import Utils, LangExt
 
-from semanticshare.io.oz.srv import WebConfig, DynaResource
+from semanticshare.io.odysz.semantic.jserv import WebConfig, DynaResource
 
 from semanticshare.io.odysz.semantic.jprotocol import MsgCode, AnsonMsg, JProtocol, JServUrl
 from semanticshare.io.odysz.semantic.jserv.crud import SsException
@@ -1364,7 +1364,7 @@ class InstallerCli:
 
         web_cfg.port = settings.webport
 
-        # the docs published by this installation's synode (html-web 0.2.1, io.oz.srv.ResPathsTier):
+        # the docs published by this installation's synode (html-web 0.2.1, doctree.jserv's io.oz.sdoc.htmlsrv.ResPathsTier):
         # html-service asks the synode at this machine. The section, with its default values, is the
         # package's template's; also when upgraded (ISSUE upgrade-config-picks, commands.update_srv())
         if web_cfg.dynaResource is None:

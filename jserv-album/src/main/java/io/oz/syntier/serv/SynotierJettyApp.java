@@ -54,6 +54,8 @@ import io.odysz.semantics.x.SemanticException;
 import io.odysz.transact.x.TransException;
 import io.oz.album.helpers.QrProps;
 import io.oz.album.helpers.QrTerminal;
+import io.odysz.semantic.meta.DocRef;
+import io.oz.album.peer.PhotoMeta;
 import io.oz.album.peer.SynDocollPort;
 import io.oz.jserv.docs.syn.DocUser;
 import io.oz.jserv.docs.syn.ExpDoctier;
@@ -63,13 +65,11 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
-import io.oz.sdoc.DoctreeDBHelper;
-import io.oz.sdoc.build.HtmlBuilder;
-import io.oz.sdoc.publish.ResPublishTier;
-import io.oz.sdoc.publish.ResPublisher;
+import io.oz.sdoc.puck.ResPublisher;
+import io.oz.sdoc.rst.HtmlBuilder;
 import io.oz.sdoc.tier.DoctreeTier;
+import io.oz.sdoc.docx.RstreeDBHelper;
 import io.oz.sdoc.docx.DocxWalker;
-import io.oz.sdoc.imports.DocxSource;
 import io.oz.sdoc.tier.Doctree206Serv;
 import io.oz.syn.DBSynTransBuilder;
 import io.oz.syn.SyncUser;
@@ -390,10 +390,11 @@ public class SynotierJettyApp implements Daemon {
 		// semantic-doc's doc-tree tier, and its resources (pictures) for the editor, reading its working copy
 		DoctreeTier doctree = new DoctreeTier(SynDocollPort.doctree)
 				// an earlier version's doctree.db is upgraded with the package's picking list, <install>/bin/doctree-picks.json
-				.conn(DoctreeDBHelper.connect(webinf, settings.volume, synid,
+				.conn(RstreeDBHelper.connect(webinf, settings.volume, synid,
 						Paths.get(webinf).toAbsolutePath().normalize().getParent().resolve("bin").resolve(doctreepicks).toString()),
 					synid)
-				.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks)
+				// the album, h_photos: the docx files to import, and the stories' media, by their records
+				.importer(new DocRef().docm(new PhotoMeta(cfg.synconn)), DocxWalker::blocks)
 				// docs are published at the html-service of this machine (loopback: its port is localhost only)
 				.publisher(new ResPublisher(f("http://127.0.0.1:%s", settings.webport), SynDocollPort.respaths));
 
@@ -418,7 +419,6 @@ public class SynotierJettyApp implements Daemon {
 			.addSynodetier(synapp, cfg)
 			.addServPort(doctree)
 			.addServPort(new Doctree206Serv(SynDocollPort.doctree206, doctree))
-			.addServPort(new ResPublishTier(SynDocollPort.respub, doctree))
 			.allowCors(synapp.schandler)
 			;
 	}

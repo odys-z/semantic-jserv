@@ -33,8 +33,10 @@ public enum SynDocollPort implements IPort {
 	menu("menu.serv"), settings("settings.less"),
 
 	/**
-	 * doctree.serv, semantic-doc's doc-tree tier (doctree.jserv's DoctreeTier).
-	 * Also in {@link AlbumPort}; synodes parse ports with this enum.
+	 * doctree.serv, semantic-doc's doc-tree tier (doctree.jserv's DoctreeTier), of both trees, the rst
+	 * and the puck tree. Also in {@link AlbumPort}; synodes parse ports with this enum.
+	 * Also queried by the local html-service, r/published, without a session: its name and url
+	 * must be the same as html-service's HtmlPort.doctree.
 	 */
 	doctree("doctree.serv"),
 
@@ -44,15 +46,9 @@ public enum SynDocollPort implements IPort {
 	 */
 	doctree206("doctree206.serv"),
 
-	/**
-	 * respub.less, the synode's port for the local html-service (doctree.jserv's ResPublishTier):
-	 * html-service queries the docs published. No session, localhost only.
-	 * The name and url must be the same as html-service's HtmlPort.respub.
-	 */
-	respub("respub.less"),
 
 	/**
-	 * respaths.serv, the local html-service's port (io.oz.srv.ResPathsTier), not a port of synodes:
+	 * respaths.serv, the local html-service's port (doctree.jserv's io.oz.sdoc.htmlsrv.ResPathsTier), not a port of synodes:
 	 * for the synode's requests of publishing / removing docs (doctree.jserv's ResPublisher).
 	 * The name and url must be the same as html-service's HtmlPort.respaths.
 	 */

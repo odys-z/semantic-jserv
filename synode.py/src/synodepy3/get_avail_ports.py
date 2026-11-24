@@ -282,7 +282,7 @@ def synode_lookup(pid, port, status="LISTEN"):
 
     try:
         from semanticshare.io.oz.jserv.docs.syn.singleton import AppSettings
-        from semanticshare.io.oz.srv import WebConfig
+        from semanticshare.io.odysz.semantic.jserv import WebConfig
     except ImportError:
         _anson_missing = True
         print("(anson.py3 / semantics.py3 not installed: synode services are not identified.)", file=sys.stderr)
