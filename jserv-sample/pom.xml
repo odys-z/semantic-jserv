@@ -2,6 +2,13 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>io.github.odys-z</groupId>
+    <artifactId>semantics.java</artifactId>
+    <version>[0.0.3,20.0.0)</version>
+    <relativePath/>
+  </parent>
+
   <groupId>io.github.odys-z</groupId>
   <artifactId>jserv-sample</artifactId>
   <version>1.5.9</version>
@@ -11,9 +18,6 @@
   <packaging>jar</packaging>
 
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	<maven.compiler.source>17</maven.compiler.source>
-	<maven.compiler.target>17</maven.compiler.target>
 	<jetty.version>12.0.36</jetty.version>
 	<jetty-ee8.version>12.0.32</jetty-ee8.version>
 
@@ -27,20 +31,10 @@
     </license>
   </licenses>
 
-  <developers>
-    <developer>
-      <name>Ody Zhou</name>
-      <email>odys.zhou@gmail.com</email>
-      <organization>odys-z.github.io</organization>
-      <organizationUrl>https://odys-z.github.io</organizationUrl>
-    </developer>
-  </developers>
-
   <dependencies>
   	<dependency>
 		<groupId>org.junit.jupiter</groupId>
 		<artifactId>junit-jupiter-engine</artifactId>
-		<version>6.1.0</version>
 		<scope>test</scope>
     </dependency>
 
@@ -91,14 +85,10 @@
   <build>
     <finalName>jserv-sample</finalName>
     <plugins>
-    	<plugin>
-    		<artifactId>maven-compiler-plugin</artifactId>
-    		<version>3.7.0</version>
-    		<configuration>
-    		<source>17</source>
-    		<target>17</target>
-    		</configuration>
-    	</plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+      </plugin>
 
     	<plugin>
 	        <groupId>org.apache.tomcat.maven</groupId>
@@ -129,7 +119,6 @@
 			<!-- jserv-sample-[version].jar, the test app built and packaged by tasks.py, the same as jserv-album's -->
 			<groupId>org.apache.maven.plugins</groupId>
 			<artifactId>maven-shade-plugin</artifactId>
-			<version>3.2.2</version>
 			<executions>
 				<execution>
 					<phase>package</phase>
@@ -163,7 +152,6 @@
 		<plugin>
 			<groupId>org.sonatype.central</groupId>
 			<artifactId>central-publishing-maven-plugin</artifactId>
-			<version>0.8.0</version>
 			<extensions>true</extensions>
 			<configuration>
 				<publishingServerId>central</publishingServerId>
@@ -174,7 +162,6 @@
 		<plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-source-plugin</artifactId>
-	      <version>2.2.1</version>
 	      <executions>
 	        <execution>
 	          <id>attach-sources</id>
@@ -188,7 +175,6 @@
 	  <plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-javadoc-plugin</artifactId>
-	      <version>3.5.0</version>
 	      <executions>
 	        <execution>
 	          <id>attach-javadocs</id>
@@ -206,7 +192,6 @@
 	  <plugin>
 		<groupId>org.apache.maven.plugins</groupId>
 		<artifactId>maven-gpg-plugin</artifactId>
-		<version>3.2.8</version>
 		<executions>
 			<execution>
 			  <id>semantics.transact</id>
