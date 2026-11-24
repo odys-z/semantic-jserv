@@ -15,9 +15,9 @@ import io.odysz.jclient.HttpServClient;
 import io.odysz.semantic.jprotocol.AnsonMsg;
 import io.odysz.semantic.jprotocol.AnsonMsg.MsgCode;
 import io.oz.album.peer.SynDocollPort;
-import io.oz.sdoc.publish.ResPublishReq;
-import io.oz.sdoc.publish.ResPublishReq.A;
-import io.oz.sdoc.publish.ResPublishResp;
+import io.oz.sdoc.publish.PuckPubReq;
+import io.oz.sdoc.publish.PuckPubReq.A;
+import io.oz.sdoc.publish.PuckPubResp;
 import io.oz.sdoc.publish.ResPublishTier;
 import io.oz.sdoc.tier.DoctreeTier;
 
@@ -63,13 +63,13 @@ class ResPublishPortsTest {
 	/** What html-service does: query the published docs, no session. */
 	@Test
 	void testQueryPublished() throws Exception {
-		AnsonMsg<ResPublishReq> req = new AnsonMsg<ResPublishReq>(SynDocollPort.respub)
-				.body(new ResPublishReq().a(A.refresh));
+		AnsonMsg<PuckPubReq> req = new AnsonMsg<PuckPubReq>(SynDocollPort.respub)
+				.body(new PuckPubReq().a(A.refresh));
 
 		AnsonMsg<?> resp = new HttpServClient().post(SynDocollPort.respub.url(jserv), req);
 
 		assertEquals(MsgCode.ok, resp.code());
 		assertEquals(SynDocollPort.respub, resp.port());
-		assertEquals(0, ((ResPublishResp) resp.body(0)).respubs.size());
+		assertEquals(0, ((PuckPubResp) resp.body(0)).respubs.size());
 	}
 }

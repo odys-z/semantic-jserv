@@ -63,13 +63,14 @@ import io.oz.jserv.docs.syn.singleton.AppSettings;
 import io.oz.jserv.docs.syn.singleton.CrossOriginFilter;
 import io.oz.jserv.docs.syn.singleton.ISynodeLocalExposer;
 import io.oz.jserv.docs.syn.singleton.Syngleton;
-import io.oz.sdoc.DoctreeDBHelper;
-import io.oz.sdoc.build.HtmlBuilder;
 import io.oz.sdoc.publish.ResPublishTier;
-import io.oz.sdoc.publish.ResPublisher;
+import io.oz.sdoc.puck.ResPublisher;
+import io.oz.sdoc.rst.HtmlBuilder;
 import io.oz.sdoc.tier.DoctreeTier;
+import io.oz.sdoc.docx.DocxtreeDBHelper;
+import io.oz.sdoc.docx.DocxSource;
 import io.oz.sdoc.docx.DocxWalker;
-import io.oz.sdoc.imports.DocxSource;
+import io.oz.sdoc.docx.MediaSource;
 import io.oz.sdoc.tier.Doctree206Serv;
 import io.oz.syn.DBSynTransBuilder;
 import io.oz.syn.SyncUser;
@@ -390,10 +391,12 @@ public class SynotierJettyApp implements Daemon {
 		// semantic-doc's doc-tree tier, and its resources (pictures) for the editor, reading its working copy
 		DoctreeTier doctree = new DoctreeTier(SynDocollPort.doctree)
 				// an earlier version's doctree.db is upgraded with the package's picking list, <install>/bin/doctree-picks.json
-				.conn(DoctreeDBHelper.connect(webinf, settings.volume, synid,
+				.conn(DocxtreeDBHelper.connect(webinf, settings.volume, synid,
 						Paths.get(webinf).toAbsolutePath().normalize().getParent().resolve("bin").resolve(doctreepicks).toString()),
 					synid)
 				.importer(DocxSource.extfiles(cfg.synconn, "h_photos"), DocxWalker::blocks)
+				// stories' media: the album's records and files, mapped for html-service's m/<synuid> of published stories
+				.media(MediaSource.extfiles(cfg.synconn, "h_photos"))
 				// docs are published at the html-service of this machine (loopback: its port is localhost only)
 				.publisher(new ResPublisher(f("http://127.0.0.1:%s", settings.webport), SynDocollPort.respaths));
 

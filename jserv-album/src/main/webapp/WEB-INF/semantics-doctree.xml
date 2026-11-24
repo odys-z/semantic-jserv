@@ -34,5 +34,22 @@
 		<pk>nid</pk>
 		<args>parentId,sort,fullpath,4</args>
 	</s>
+	<s>
+		<!-- story id (since doctree.jserv 0.1.5): synode + '.S.' + auto key, e.g. X29.S.000A,
+			never a doc's id (synode + '.' + auto key). args: pk, start, prefix (column synode), prefix (const S) -->
+		<id>stories.pk</id>
+		<smtc>autopk</smtc>
+		<tabl>s_stories</tabl>
+		<pk>storyId</pk>
+		<args>storyId,0,synode,S</args>
+	</s>
+	<s>
+		<!-- a story's block: auto key, unique in the db -->
+		<id>storynodes.pk</id>
+		<smtc>autopk</smtc>
+		<tabl>s_storynodes</tabl>
+		<pk>nid</pk>
+		<args>nid,0</args>
+	</s>
   </t>
 </semantics>
