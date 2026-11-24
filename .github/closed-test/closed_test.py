@@ -28,8 +28,8 @@ packed-bats: the package's winsrv/install-*.bat are stamped at build (jserv-albu
 the BEGIN line's mark), with the jar versions of its bin/resource.json; Windows packages since installing
 stopped stamping them (synodepy3 winsrv.py), so a package built before fails here.
 
-desktop: the desktop's settings/app-settings.json is the node's (synode_id, synode_vol), and its
-wsagent_jar is there; after an upgrade (given the file before it), the installer's values are kept
+desktop: the desktop's settings/app-settings.json is the node's (synode_id, synode_vol, the existing
+volume of WEB-INF/settings.json, which the desktop's volume button requires), and its wsagent_jar is there; after an upgrade (given the file before it), the installer's values are kept
 (bin/resource.json config_picks) and wsagent_jar is the new package's. Skipped without desktop/.
 
 shortcuts (Windows): Start Menu/Programs/<root>/<synid>/ has the shortcuts desktop/create-shortcut.bat
@@ -332,8 +332,16 @@ def desktop(node, synid, before=None):
         st = json.load(f)
     if st.get('synode_id') != synid:
         fail(f"{name}: desktop/settings/app-settings.json synode_id is {st.get('synode_id')!r}, expected {synid!r}")
-    if not st.get('synode_vol'):
+    # the desktop's volume button is enabled only with the synode's existing volume (Slingleton::has_synode_vol())
+    with open(os.path.join(node, 'WEB-INF', 'settings.json'), encoding='utf-8') as f:
+        vol = json.load(f).get('volume') or ''
+    dvol = st.get('synode_vol') or ''
+    if not dvol:
         fail(f'{name}: desktop/settings/app-settings.json has no synode_vol')
+    if os.path.normcase(os.path.abspath(dvol)) != os.path.normcase(os.path.abspath(vol)):
+        fail(f'{name}: desktop/settings/app-settings.json synode_vol is {dvol!r}, not the volume {vol!r} of WEB-INF/settings.json')
+    if not os.path.isdir(dvol):
+        fail(f'{name}: desktop/settings/app-settings.json synode_vol {dvol!r} does not exist')
     jar = st.get('wsagent_jar') or ''
     if not jar or not os.path.isfile(os.path.join(node, 'desktop', jar)):
         fail(f'{name}: desktop/settings/app-settings.json wsagent_jar {jar!r} is not in desktop/')
@@ -341,7 +349,8 @@ def desktop(node, synid, before=None):
     if before:
         with open(before, encoding='utf-8') as f:
             old = json.load(f)
-        changed = [k for k in DESKTOP_PICKS if k in old and old[k] is not None and st.get(k) != old[k]]
+        # blank values are not kept: the upgrade binds the desktop to the synode (synodepy3 commands.update_srv() step 7)
+        changed = [k for k in DESKTOP_PICKS if old.get(k) and st.get(k) != old[k]]
         if changed:
             fail(f'{name}: the upgrade did not keep the desktop settings: {", ".join(changed)}')
         agents = sorted(os.path.basename(p) for p in glob.glob(os.path.join(node, 'desktop', 'res', 'ws-agent-*.jar')))

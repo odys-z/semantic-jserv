@@ -12,6 +12,7 @@ import sys
 import time
 import zipfile
 from datetime import datetime
+from pathlib import Path
 from typing import cast, Optional
 
 from anson.io.odysz.common import Utils, LangExt
@@ -122,9 +123,14 @@ def update_srv(pkg_path: str, sandbox: bool = False):
          upgrading (pip install -U synode.py3), which can be the same version as the package's
          synodepy3. The package's bin/synode_py3-*.whl is not installed. Windows: the new
          upgrade.exe is unpacked as upgrade.pkg, beside the running upgrade.exe, and moved by setup-*.
-      7. if the desktop is packaged, create (or refresh) the synode's shortcuts with the new package's
+      7. if the desktop is packaged, bind it to this synode: the installer's values are written into its
+         settings, as installing does (InstallerCli.update_clients()), whatever config_picks kept, as the
+         desktop is installed in the fixed layout, one desktop per synode, <install>/desktop (e.g. a synode
+         installed before the desktop was packaged gets the package's app-settings.json, a template with
+         no synode, so its volume button is disabled); this binding is to be removed later.
+         Then create (or refresh) the synode's shortcuts with the new package's
          desktop/create-shortcut script, so that a synode installed before the shortcuts gets them
-         (installer_api.create_desktop_shortcut()); a failure only warns.
+         (installer_api.create_desktop_shortcut()); a failure of either only warns.
       No step asks the user. Linux: sudo asks for a password only if it needs one; Windows: installing
       services needs the administrator, asked once (UAC) unless upgrade.exe runs as one.
 
@@ -336,7 +342,17 @@ def update_srv(pkg_path: str, sandbox: bool = False):
         for u, st in restart_sysunits(cast(Sudo, sudo), units, ask=False).items():
             print(f'{u}: {st}')
 
-    # 7. the synode's shortcuts, with the new package's script (an installation before them gets them)
+    # 7. the desktop, bound to this synode (the fixed layout, one desktop per synode, <install>/desktop),
+    #    so that its volume button is enabled. To be removed with the binding.
+    if unpacked and desktop_exe() is not None:
+        try:
+            cli.update_clients([(Path(desktop_dir), 'settings/app-settings.json')])
+        except Exception as e:  # the services are already restarted
+            print(f'Warning: cannot bind the desktop to this synode: {e}\n'
+                  f'Its synode_id and synode_vol must be this synode\'s: {desktop_dir}/settings/app-settings.json.',
+                  file=sys.stderr)
+
+    # 7. (continued) the synode's shortcuts, with the new package's script (an installation before them gets them)
     if unpacked and desktop_exe() is not None:
         try:
             print(create_desktop_shortcut(synode_id(cli)))
