@@ -59,8 +59,8 @@ public class WebConfig extends Anson {
 	/**
 	 * Optional. Dynamic resources: paths published / removed while the server is running, by
 	 * {@link DynaResource#handler}, an {@link io.oz.srv.IResUpdater} only loaded if this is configured,
-	 * e. g. for {@link io.oz.srv.ResPathsTier}<pre>
-	 * { "handler": "io.oz.srv.ResPathsTier",
+	 * e. g. for doctree.jserv's io.oz.sdoc.htmlsrv.ResPathsTier<pre>
+	 * { "handler": "io.oz.sdoc.htmlsrv.ResPathsTier",
 	 *   "syn_jserv": "http://127.0.0.1:8964/jserv-album", "pollInterval_snd": 3600,
 	 *   "resource": "respaths", "danyroot": "pub", "allowDir": false }</pre>
 	 * The published docs are listed at /pub/ (or /pub/index.html), see {@link ResIndex}.

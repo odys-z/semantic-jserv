@@ -12,7 +12,7 @@ public class DynaResource extends Anson {
 	public String help;
 	
 	/**
-	 * Handler. For 0.2.2, always "io.oz.srv.ResPathsTier".
+	 * Handler. For 0.2.2, always "io.oz.sdoc.htmlsrv.ResPathsTier" (doctree.jserv).
 	 */
 	public String handler;
 	

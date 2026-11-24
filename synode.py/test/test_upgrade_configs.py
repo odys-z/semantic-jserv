@@ -110,10 +110,10 @@ def test_upgrade_080_to_082(tmp_path: Path, monkeypatch):
     assert html['welcomepages'] == ['home.html']
     # the new version's: paths, with the new type and the root path, and the start handler
     assert [p['path'] for p in html['paths']] == ['/*']
-    assert html['paths'][0]['type'] == 'io.oz.srv.StaticResource'
+    assert html['paths'][0]['type'] == 'io.odysz.semantic.jserv.StaticResource'
     assert html['startHandler'][0] == 'io.oz.srv.JservLocalHandler'
     # a missing field, with the template's default values
-    assert html['dynaResource']['handler'] == 'io.oz.srv.ResPathsTier'
+    assert html['dynaResource']['handler'] == 'io.oz.sdoc.htmlsrv.ResPathsTier'
     assert html['dynaResource']['pollInterval_snd'] == 3600
     assert html['dynaResource']['danyroot'] == 'pub'
     # the installer's values, of settings.json
