@@ -27,6 +27,7 @@
     "jserv-album-lib"     : "{github}/semantic-jserv/jserv-album-lib",
     "docsync.jserv"       : "{github}/semantic-jserv/docsync.jserv",
     "doctree.jserv"       : "{github}/semantic-doc/doctree.jserv",
+    "semantic-doc.ts"     : "{github}/semantic-doc/src",
     "synode.py"           : "{github}/semantic-jserv/synode.py",
     "anclient.jserv"      : "{github}/Anclient/java/eclipse-workspace/anclient.jserv",
     "anclient.py3"        : "{github}/Anclient/py3",
@@ -37,8 +38,8 @@
     "registry-central"    : "{github}/Semantic-Network/registration/jserv",
     "registry-jclient"    : "{github}/Semantic-Network/registration/jclient",
     "html-service"        : "{github}/html-service/java",
-    "JRE-Mirror"          : "{github}/JRE-Mirror",
-    "Mime-type-no-nodejs" : "{github}/Mime-type-no-nodejs"
+    "Mime-type-no-nodejs" : "{github}/Mime-type-no-nodejs",
+    "JRE-Mirror"          : "{github}/JRE-Mirror"
   },
   "deploy": {
     "mirror_path"   : null,
