@@ -2,7 +2,7 @@
 @echo "--- Installing Web-dist Windows Service ---"
 
 @REM BEGIN version section, stamped at build by jserv-album/tasks.py config. Do not modify except debugging (Not using bat file arg for easy debugging)
-@set jar_ver=0.2.1
+@set jar_ver=0.2.3
 @REM END version section
 
 @REM @set serv_name="Synode.web-%jar_ver%"
