@@ -16,7 +16,7 @@ _independent = bool(_tasks & {'github-head', 'gh-release'})
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.14") # gzip2() excludes by the paths in the package; toFile() writes LF
-    requir_pkg("semantics.py3", "0.6.24") # WebAssets, WebConfig.startHandlers; SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load(); io.oz.syn.dbpicks
+    requir_pkg("semantics.py3", "0.6.25") # WebAssets, WebConfig.startHandlers; SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load(); io.oz.syn.dbpicks, IGNORE-PICKING- marks
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("anclient.py3", "0.2.8")
