@@ -15,7 +15,7 @@ _independent = bool(_tasks & {'github-head', 'gh-release'})
 
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
-    requir_pkg("anson.py3", "0.6.13") # gzip2() excludes by the paths in the package
+    requir_pkg("anson.py3", "0.6.14") # gzip2() excludes by the paths in the package; toFile() writes LF
     requir_pkg("semantics.py3", "0.6.24") # WebAssets, WebConfig.startHandlers; SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load(); io.oz.syn.dbpicks
 
 if 'install-py-local' not in _tasks and not _independent:
@@ -639,14 +639,10 @@ def package(c: Context, deploy: str = 'tasks.json'):
         manifest with the new one, and points the services to the changed files.
         :return: path of resource.json
         """
-        import json
-        with open(resource_src, encoding='utf-8') as f:
-            res = json.load(f)
+        res = PkgResources.load(resource_src)
         built = taskcfg.pkg_res()
-        res['files'], res['versions'] = dict(built.files), dict(built.versions)
-        with open(resource_src, 'w', encoding='utf-8') as f:
-            json.dump(res, f, indent=2, ensure_ascii=False)
-            f.write('\n')
+        res.files, res.versions = dict(built.files), dict(built.versions)
+        res.toFile(resource_src) # LF, also on Windows (anson.py3 0.6.14)
         return resource_src
 
     # the doc template packed, see AppSettings.sdocTemplateRoot, sdocTemplateId
