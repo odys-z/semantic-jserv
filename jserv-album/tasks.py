@@ -31,11 +31,12 @@ if 'install-py-local' not in _tasks and not _independent:
 
 # install-maven-local is the task that installs these jars, so don't require them before it runs.
 if 'install-maven-local' not in _tasks and not _independent:
-    mvn.requir_installed("io.github.odys-z:anclient.java", "[0.5.24,)")
-    mvn.requir_installed("io.github.odys-z:semantic.jserv", "[1.5.21,)")
+    mvn.requir_installed("io.github.odys-z:antson", "[1.2.1,)")
+    mvn.requir_installed("io.github.odys-z:anclient.java", "[0.5.25,)")
+    mvn.requir_installed("io.github.odys-z:semantic.jserv", "[1.6.1,)")
     mvn.requir_installed("io.github.odys-z:docsync.jserv", "[0.3.6,)")
-    mvn.requir_installed("io.github.odys-z:doctree.jserv", "[0.1.6,)")  # semantic-doc, not published yet
-    mvn.requir_installed("io.github.odys-z:html-web", "[0.2.1,)")
+    mvn.requir_installed("io.github.odys-z:doctree.jserv", "[0.1.7,)")  # semantic-doc, not published yet
+    mvn.requir_installed("io.github.odys-z:html-web", "[0.2.3,)")
     mvn.requir_installed("io.github.odys-z:ws-agent", "[0.2.1,)")
 
 from semanticshare.io.oz.invoke import SynodeTask
@@ -296,22 +297,21 @@ def install_maven_local(c: Context, deploy: str='tasks.closed-test.json', gpg: s
     
     validate(c, deploy=deploy)
 
-    git = taskcfg.git_prj
     pom_locations = [
-        git('antson', 'antson.java'),
-        git('semantic-transact'),
-        git('semantic-DA'),
-        git('semantic-jserv'),
-        git('jserv-album-lib'),
-        git('anclient.jserv'),
-        git('registry-jclient'),
-        git('registry-central'),
-        git('docsync.jserv'),
-        git('doctree.jserv'),
-        git('album-android', 'albumtier'),
+        taskcfg.git_prj('antson', 'antson.java'),
+        taskcfg.git_prj('semantic-transact'),
+        taskcfg.git_prj('semantic-DA'),
+        taskcfg.git_prj('semantic-jserv'),
+        taskcfg.git_prj('jserv-album-lib'),
+        taskcfg.git_prj('anclient.jserv'),
+        taskcfg.git_prj('registry-jclient'),
+        taskcfg.git_prj('registry-central'),
+        taskcfg.git_prj('docsync.jserv'),
+        taskcfg.git_prj('doctree.jserv'),
+        taskcfg.git_prj('album-android', 'albumtier'),
 
-        git('html-service'),
-        git('album-wsagent')
+        taskcfg.git_prj('html-service'),
+        taskcfg.git_prj('album-wsagent')
     ]
 
     print('----------  Install Local Maven ---------')
