@@ -1,4 +1,4 @@
-package io.oz.album.helpers;
+package io.odysz.semantic.jserv.helper;
 
 public class QrProps {
 

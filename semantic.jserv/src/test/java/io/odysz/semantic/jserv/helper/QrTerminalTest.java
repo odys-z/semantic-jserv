@@ -1,4 +1,4 @@
-package io.oz.album.helpers;
+package io.odysz.semantic.jserv.helper;
 
 import static org.junit.jupiter.api.Assertions.*;
 

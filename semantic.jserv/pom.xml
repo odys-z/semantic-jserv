@@ -37,6 +37,14 @@
   		<scope>test</scope>
     </dependency>
 
+	<!-- QR codes printed to the terminal, helper.QrTerminal (moved from jserv-album),
+	     used by jserv-album and html-service -->
+	<dependency>
+		<groupId>com.google.zxing</groupId>
+		<artifactId>core</artifactId>
+		<version>3.5.3</version>
+	</dependency>
+
 	<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
   	<dependency>
 		<groupId>commons-io</groupId>
