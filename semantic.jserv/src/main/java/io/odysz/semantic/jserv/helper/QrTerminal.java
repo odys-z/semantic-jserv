@@ -3,7 +3,7 @@
  * <a href='https://github.com/Auties00/QrToTerminal?tab=readme-ov-file#qr-code-to-terminal'>
  * Qr code to terminal</a>, * license unspecified, Mar 24, 2025 
  */
-package io.oz.album.helpers;
+package io.odysz.semantic.jserv.helper;
 
 import static io.odysz.common.LangExt.isNull;
 
