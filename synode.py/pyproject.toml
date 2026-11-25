@@ -14,7 +14,7 @@ requires-python = ">=3.12.0"
 dependencies = [
     "pyside6>=6.6.0,<=6.8.2.1",
     "qrcode",
-    "semantics.py3>=0.6.23",
+    "semantics.py3>=0.6.25",
     "anson.py3>=0.6.13",
     "anclient.py3>=0.2.8",
     "jre-mirror>=0.1.2",
