@@ -1,50 +1,36 @@
 {
   "type": "io.oz.syn.pkgresource.PkgResources",
-  "//": "The package's manifest, packed as bin/resource.json (semanticshare PkgResources). files and versions are written by tasks.py package(), from tasks.*.json; the rest is written here by hand.",
   "files": {
     "synode": "bin/jserv-album-0.8.3.jar",
     "html-web": "bin/html-web-0.2.3.jar",
-    "synode.py": "bin/synode_py3-0.8.5-py3-none-any.whl"
-  },
+    "synode.py": "bin/synode_py3-0.8.5-py3-none-any.whl"},
   "versions": {
     "jar_ver": "0.8.3",
     "web_ver": "0.4.6",
     "html_srver": "0.2.3",
-    "synodepy3": "0.8.5"
-  },
-  "// upgrade_from": "the installed versions this package upgrades, both inclusive and optional",
-  "upgrade_from": {
-    "min": "0.8.0"
-  },
-  "// upgrader": "the oldest upgrade tool (synodepy3) that installs this package",
-  "upgrader": {
-    "min": "0.8.2"
-  },
-  "// config_picks": "The configuration files an upgrade makes of this package's file (the template) and the installed values of the fields listed: {file: {field: [the names it ever had, the newest first]}} (semanticshare ConfigPicks). Everything else is the new version's: new fields, default values, renamed types. A file not listed is kept as installed. Values the installer computes are not listed: html-service's port and dynaResource.syn_jserv, of settings.json. ISSUE upgrade-config-picks.",
-  "// config_picks desktop/settings/app-settings.json": "the installer's values (synodepy3 InstallerCli.update_clients()) and the device, listed although the installer computes some, as on Windows the running upgrade.exe is the previous version; wsagent_jar is the new package's, the new IPC agent jar.",
+    "synodepy3": "0.8.5"},
+  "upgrade_from": {"min": "0.8.0"},
+  "upgrader": {"min": "0.8.2"},
   "config_picks": {
     "WEB-INF/html-service.json": {
-      "welcomepages": [ "welcomepages" ],
-      "dynaResource.pollInterval_snd": [ "dynaResource.pollInterval_snd" ],
-      "dynaResource.allowDir": [ "dynaResource.allowDir" ],
-      "dynaResource.resource": [ "dynaResource.resource" ],
-      "dynaResource.danyroot": [ "dynaResource.danyroot" ]
-    },
+      "welcomepages": ["welcomepages"],
+      "dynaResource.pollInterval_snd": ["dynaResource.pollInterval_snd"],
+      "dynaResource.allowDir": ["dynaResource.allowDir"],
+      "dynaResource.resource": ["dynaResource.resource"],
+      "dynaResource.danyroot": ["dynaResource.danyroot"]},
     "desktop/settings/app-settings.json": {
-      "synode_id": [ "synode_id" ],
-      "synode_vol": [ "synode_vol" ],
-      "synode_jserv": [ "synode_jserv" ],
-      "album_web": [ "album_web" ],
-      "java_path": [ "java_path" ],
-      "domain": [ "domain" ],
-      "domain_token": [ "domain_token" ],
-      "admin": [ "admin" ],
-      "org": [ "org" ],
-      "market_id": [ "market_id" ],
-      "market_name": [ "market_name" ],
-      "centralPswd": [ "centralPswd" ],
-      "regiserv": [ "regiserv" ],
-      "device": [ "device" ]
-    }
-  }
+      "synode_id": ["synode_id"],
+      "synode_vol": ["synode_vol"],
+      "synode_jserv": ["synode_jserv"],
+      "album_web": ["album_web"],
+      "java_path": ["java_path"],
+      "domain": ["domain"],
+      "domain_token": ["domain_token"],
+      "admin": ["admin"],
+      "org": ["org"],
+      "market_id": ["market_id"],
+      "market_name": ["market_name"],
+      "centralPswd": ["centralPswd"],
+      "regiserv": ["regiserv"],
+      "device": ["device"]}}
 }
