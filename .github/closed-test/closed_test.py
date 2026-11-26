@@ -213,6 +213,7 @@ RELEASE_KINDS = {
     'synode Linux tar.gz': r'^synode-.*x64_linux.*\.tar\.gz$',
     'desktop zip': r'^desktop-.*\.zip$',
     'apk': r'\.apk$',
+    'Windows upgrader': r'^synode-upgrade-.*\.exe$',
 }
 
 

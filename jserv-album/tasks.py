@@ -16,7 +16,7 @@ _independent = bool(_tasks & {'github-head', 'gh-release'})
 # install-py-local is the task that installs / upgrades these packages, so don't require them before it runs.
 if 'install-py-local' not in _tasks:
     requir_pkg("anson.py3", "0.6.14") # gzip2() excludes by the paths in the package; toFile() writes LF
-    requir_pkg("semantics.py3", "0.6.25") # WebAssets, WebConfig.startHandlers; SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load(); io.oz.syn.dbpicks, IGNORE-PICKING- marks
+    requir_pkg("semantics.py3", "0.6.26") # SynodeTask.upgrader_name(); WebAssets, WebConfig.startHandlers; SynodeTask.github, gitprjs {github}, link-json, ver_synodepy3, pkg_res(), github_release, PkgResources.load(); io.oz.syn.dbpicks, IGNORE-PICKING- marks
 
 if 'install-py-local' not in _tasks and not _independent:
     requir_pkg("anclient.py3", "0.2.8")
@@ -749,6 +749,9 @@ def package(c: Context, deploy: str = 'tasks.json'):
             print("[*** TODO *** 0.8.0]  skip building & packaging desktop-posix")
 
         Utils.copy_anyway(taskcfg.get_gradleprj_apk(), Path(taskcfg.package_dir) / taskcfg.get_apk_name(), log=True)
+
+        if os.name == 'nt': # Linux: synode.py3 from PyPI
+            Utils.copy_anyway(f'{synode_py}/dist/upgrade.exe', taskcfg.get_upgrader(), log=True)
         print('****************************************************************************************************')
 
     except Exception as e:

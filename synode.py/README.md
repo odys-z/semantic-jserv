@@ -18,14 +18,20 @@ Synode.py is the synchronization node for Portfolio, a file / resources synchron
 
   The package's bin/synode_py3-*.whl is not installed by the upgrade.
 
-  For Windows
+  For Windows, the upgrade tool is released on its own beside the package, as
+  synode-upgrade-<synodepy3 version>-<market>-<org>.exe (jserv-album tasks.py package()). Download
+  both, put the upgrader in the installation folder, then, there:
 
   ```
-    ./upgrade.exe path-to-new-version.zip
+    ./synode-upgrade-0.8.5-alpha-pmking.exe path-to-new-version.zip
   ```
 
-  The package carries upgrade.exe as upgrade.pkg, which can't clobber the running upgrade.exe;
+  The installed upgrade.exe may be older than the package accepts (bin/resource.json upgrader).
+  The package still carries upgrade.exe as upgrade.pkg, which can't clobber a running upgrade.exe;
   setup-gui.exe / setup-cli.exe moves it to upgrade.exe.
+
+  The upgrader is downloaded by the users for now; it is to be downloaded by the synode (Java), then
+  by the desktop's ws-agent.
 
 # Python Version Selection
 

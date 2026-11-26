@@ -43,5 +43,7 @@ Documentation: {doc_link}
 
 The installed commands come with bin/synode_py3-*.whl (`pip install bin/synode_py3-*.whl`).
 To upgrade on Linux, first `pip install -U synode.py3` (PyPI, may be the same version), then `synode-upgrade-srv`.
+To upgrade on Windows, download the upgrader released with the package, `synode-upgrade-<version>-*.exe`,
+into the installation folder and run it there with the package zip.
 Run `synode-cli --help` for the command line setup's help.
 '''

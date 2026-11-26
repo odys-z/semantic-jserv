@@ -121,8 +121,10 @@ def update_srv(pkg_path: str, sandbox: bool = False):
          in settings.envars (winsrv.apply_winsrv_resources())
       6. Linux: nothing; the upgrade tool is synode.py3 from PyPI, installed by the user before
          upgrading (pip install -U synode.py3), which can be the same version as the package's
-         synodepy3. The package's bin/synode_py3-*.whl is not installed. Windows: the new
-         upgrade.exe is unpacked as upgrade.pkg, beside the running upgrade.exe, and moved by setup-*.
+         synodepy3. The package's bin/synode_py3-*.whl is not installed. Windows: the upgrade tool
+         is the upgrader released with the package (synode-upgrade-<synodepy3>-*.exe), downloaded
+         into the installation folder by the user; the package's upgrade.exe is unpacked as
+         upgrade.pkg, beside an installed upgrade.exe, and moved by setup-*.
       7. if the desktop is packaged, bind it to this synode: the installer's values are written into its
          settings, as installing does (InstallerCli.update_clients()), whatever config_picks kept, as the
          desktop is installed in the fixed layout, one desktop per synode, <install>/desktop (e.g. a synode
@@ -176,7 +178,19 @@ def update_srv(pkg_path: str, sandbox: bool = False):
     if pkg_res is None:
         print(f'Warning: the package has no {resource_json}, its versions are not checked.', file=sys.stderr)
     else:
-        why = pkg_res.refuses_upgrader(synodepy3_ver) or pkg_res.refuses(installed.jar_ver())
+        why = pkg_res.refuses_upgrader(synodepy3_ver)
+        if why:
+            # how to get the new tool, see jserv-album/tasks.py package(), SynodeTask.upgrader_name()
+            get = ('Download the upgrader released with the package, synode-upgrade-<version>-*.exe, '
+                   'into the installation folder and run it from there instead:\n'
+                   f'    synode-upgrade-<version>-*.exe {pkg_path}') \
+                if os.name == 'nt' else \
+                  ('Upgrade the tool first (PyPI), then run it again:\n'
+                   '    pip install -U synode.py3\n'
+                   f'    synode-upgrade-srv {pkg_path}')
+            print(f'Upgrade refused: {why}.\n{get}\nNothing is changed.', file=sys.stderr)
+            return
+        why = pkg_res.refuses(installed.jar_ver())
         if why:
             print(f'Upgrade refused: {why}.\nNothing is changed.', file=sys.stderr)
             return
