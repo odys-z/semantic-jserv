@@ -32,4 +32,6 @@ if __name__ == '__main__':
         pypath, javapath = gen_peers(settings, ast_folder)
 
         print(f'Done. Genterated ASTs:\n', settings.ansons)
-        print(f'Output:\n', 'python:\t', pypath.absolute(), 'java:\t', None if javapath is None else javapath.absolute())
+        print('Output:')
+        print('python:\t', pypath.absolute())
+        print('java:\t', None if javapath is None else javapath.absolute())
