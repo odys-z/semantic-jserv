@@ -1262,7 +1262,22 @@ class InstallerCli:
             if csets.__type__ == DesktopSettings().__type__:
                 csets = cast(DesktopSettings, csets)
                 csets.synode_id = self.registry.config.synid
-                csets.synode_jserv = self.find_peer(csets.synode_id).jserv
+
+                ###########################################################################################
+                # 2026-11-27
+                # Tolerate the old versions error (emptyp synode-id by installer)
+                # csets.synode_jserv = self.find_peer(csets.synode_id).jserv
+                # Future Design: local synodes can be mulitple. It's a complex setting will bewilder users.
+                # Local volumes browsing need to be redesigned
+                local_synode = None
+                if LangExt.isblank(csets.synode_id):
+                    local_synode = self.find_peer(csets.synode_id)
+                elif self.registry and self.registry.config and self.registry.config.synid:
+                    local_synode = self.find_peer(self.registry.config.synid)
+                if local_synode is not None:
+                    csets.synode_jserv = local_synode.jserv
+                ###########################################################################################
+
                 csets.synode_vol = str(Path(self.settings.volume).absolute().as_posix())
                 csets.album_web = str(self.settings.webport)
                 csets.java_path = str(java_cmd().absolute().as_posix())
